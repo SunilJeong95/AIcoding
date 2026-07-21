@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Single course — represented as a single row (id fixed = 1). Steps belong to it.
+model Course {
+  id    Int    @id @default(1)
+  title String @default("실습 교육")
+  steps Step[]
+}
+
+model Step {
+  id           String  @id @default(cuid())
+  courseId     Int     @default(1)
+  order        Int // 1-based sequential order; unique within course
+  textContent  String  @default("")
+  imageContent String? // relative path to a step illustration image (admin-uploaded), nullable
+  course       Course  @relation(fields: [courseId], references: [id])
+  // onDelete: Cascade so deleting a step cleans up dependent rows (no FK error)
+  submissions  Submission[]
+  lock         StepLock?
+
+  @@unique([courseId, order])
+}
+
+model EntryCode {
+  id                  String    @id @default(cuid())
+  code                String    @unique // human-enterable, e.g. 8-char base32
+  status              String    @default("unused") // "unused" | "in-use"
+  assignedStudentName String?
+  assignedEmployeeId  String?
+  aiTool              String? // "Cursor" | "GitHub Copilot" | "Claude" | "Codex"
+  issuedAt            DateTime  @default(now())
+  usedAt              DateTime?
+  student             Student?
+}
+
+model Student {
+  id               String    @id @default(cuid())
+  name             String
+  employeeId       String
+  aiTool           String // one of the 4 tools
+  entryCodeId      String    @unique
+  entryCode        EntryCode @relation(fields: [entryCodeId], references: [id])
+  currentStepOrder Int       @default(1) // highest unlocked step (progress). "3/6" = this value.
+  createdAt        DateTime  @default(now())
+  submissions      Submission[]
+}
+
+model Submission {
+  id         String   @id @default(cuid())
+  studentId  String
+  stepId     String
+  photoPath  String // relative path under uploads/
+  status     String   @default("uploading") // "uploading" | "uploaded"
+  uploadedAt DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id])
+  step       Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, stepId]) // one submission per step per student
+}
+
+// Session registry — enables student force-logout (Reset) and admin identity for locks.
+model Session {
+  id        String   @id @default(cuid())
+  kind      String // "student" | "admin"
+  name      String // typed name (admin) or student name
+  entryCode String? // for student sessions, to target Reset
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Pessimistic per-step edit lock (admin-content-edit).
+model StepLock {
+  stepId          String   @id
+  ownerName       String // admin name from session
+  ownerSessionId  String
+  lockedAt        DateTime @default(now())
+  lastHeartbeatAt DateTime @default(now())
+  step            Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+}
