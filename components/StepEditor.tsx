@@ -16,16 +16,19 @@ export default function StepEditor({
   order,
   initialText,
   initialImage,
+  initialRequiresUpload,
 }: {
   stepId: string;
   order: number;
   initialText: string;
   initialImage: string | null;
+  initialRequiresUpload: boolean;
 }) {
   const router = useRouter();
   const [lock, setLock] = useState<LockState>({ phase: "acquiring" });
   const [text, setText] = useState(initialText);
   const [image, setImage] = useState<string | null>(initialImage);
+  const [requiresUpload, setRequiresUpload] = useState(initialRequiresUpload);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -119,7 +122,7 @@ export default function StepEditor({
       const res = await fetch(`/api/admin/steps/${stepId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ textContent: text }),
+        body: JSON.stringify({ textContent: text, requiresUpload }),
       });
       if (res.status === 403) {
         setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
@@ -227,6 +230,22 @@ export default function StepEditor({
         )}
       </div>
 
+      <div className="mt-6">
+        <label className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
+          <input
+            type="checkbox"
+            checked={requiresUpload}
+            disabled={readOnly}
+            onChange={(e) => setRequiresUpload(e.target.checked)}
+            className="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-4 focus:ring-brand-500/10 disabled:cursor-not-allowed"
+          />
+          이 step은 실습 사진 업로드가 필요합니다
+        </label>
+        <p className="mt-1.5 pl-6 text-xs text-ink-400">
+          체크를 해제하면 학생은 사진 업로드 없이 &quot;다음&quot; 버튼만으로 이 step을 통과합니다.
+        </p>
+      </div>
+
       {status && <p className="mt-4 text-sm text-ink-600">{status}</p>}
 
       <div className="mt-6 flex gap-3">
@@ -290,9 +309,20 @@ export default function StepEditor({
                 <img
                   src={`/api/uploads/${image}`}
                   alt={`Step ${order} 삽화`}
-                  className="max-w-full rounded-xl border border-ink-200"
+                  className="mb-4 max-w-full rounded-xl border border-ink-200"
                 />
               )}
+              <div className="border-t border-ink-100 pt-4">
+                {requiresUpload ? (
+                  <div className="rounded-xl border border-dashed border-ink-300 py-3.5 text-center text-sm text-ink-400">
+                    사진 업로드 버튼이 여기에 표시됩니다
+                  </div>
+                ) : (
+                  <div className="rounded-lg bg-brand-600 py-3 text-center text-sm font-semibold text-white">
+                    다음
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

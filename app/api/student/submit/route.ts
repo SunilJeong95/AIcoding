@@ -4,6 +4,9 @@ import { getStudentSession } from "@/lib/auth";
 import { saveUpload } from "@/lib/upload";
 
 // POST /api/student/submit — multipart photo upload for the CURRENT step.
+// Only records the submission (status "uploaded"); it no longer advances
+// currentStepOrder itself — the student must click "다음" (see
+// /api/student/advance), which is disabled client-side until this succeeds.
 //
 // Security (plan §6 WU-1, auth-bypass guard): the target step is derived from the
 // server-side student.currentStepOrder, never from a client-supplied stepId. Any
@@ -43,6 +46,12 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
+  if (!targetStep.requiresUpload) {
+    return NextResponse.json(
+      { error: "이 단계는 사진 업로드가 필요하지 않습니다." },
+      { status: 400 },
+    );
+  }
 
   // If the client hinted a stepId, it must match the server target. Never trust it
   // to select the step — only to reject a stale/ahead request.
@@ -62,35 +71,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  const totalSteps = await prisma.step.count({ where: { courseId: 1 } });
-  const nextOrder = Math.min(student.currentStepOrder + 1, totalSteps);
-
-  // Record the submission (one per step per student) and auto-advance progress.
-  await prisma.$transaction(async (tx) => {
-    await tx.submission.upsert({
-      where: {
-        studentId_stepId: { studentId: student.id, stepId: targetStep.id },
-      },
-      create: {
-        studentId: student.id,
-        stepId: targetStep.id,
-        photoPath,
-        status: "uploaded",
-      },
-      update: { photoPath, status: "uploaded", uploadedAt: new Date() },
-    });
-    if (nextOrder !== student.currentStepOrder) {
-      await tx.student.update({
-        where: { id: student.id },
-        data: { currentStepOrder: nextOrder },
-      });
-    }
+  // Record the submission (one per step per student). Advancing to the next
+  // step happens separately via /api/student/advance.
+  await prisma.submission.upsert({
+    where: {
+      studentId_stepId: { studentId: student.id, stepId: targetStep.id },
+    },
+    create: {
+      studentId: student.id,
+      stepId: targetStep.id,
+      photoPath,
+      status: "uploaded",
+    },
+    update: { photoPath, status: "uploaded", uploadedAt: new Date() },
   });
 
-  return NextResponse.json({
-    ok: true,
-    currentStepOrder: nextOrder,
-    totalSteps,
-    completed: nextOrder === totalSteps,
-  });
+  return NextResponse.json({ ok: true });
 }

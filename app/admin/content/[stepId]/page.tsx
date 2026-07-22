@@ -42,6 +42,7 @@ export default async function StepEditorPage({
             order={step.order}
             initialText={step.textContent}
             initialImage={step.imageContent}
+            initialRequiresUpload={step.requiresUpload}
           />
         </div>
       </main>

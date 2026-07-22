@@ -52,6 +52,15 @@ export default function LearnPage() {
     router.replace("/login");
   }
 
+  async function onAdvance() {
+    const res = await fetch("/api/student/advance", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error ?? "다음 단계로 넘어가지 못했습니다.");
+    }
+    await load();
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-ink-50 text-sm text-ink-500">
@@ -77,13 +86,14 @@ export default function LearnPage() {
   if (!data) return null;
 
   const { currentStepOrder, totalSteps, currentStepSubmitted, steps } = data;
-  // The step at currentStepOrder awaits upload unless it's the capped final step
-  // that has already been submitted.
-  const awaitingOrder = currentStepSubmitted ? null : currentStepOrder;
+  // The course is fully done once the (capped) last step has been advanced
+  // past via /api/student/advance — until then, currentStepOrder is always
+  // the step awaiting attention (upload-then-next, or just next).
   const allDone =
     totalSteps > 0 &&
     currentStepOrder >= totalSteps &&
     currentStepSubmitted;
+  const awaitingOrder = allDone ? null : currentStepOrder;
   const progressPct =
     totalSteps > 0 ? Math.min(100, Math.round((currentStepOrder / totalSteps) * 100)) : 0;
 
@@ -123,7 +133,9 @@ export default function LearnPage() {
               step={step}
               totalSteps={totalSteps}
               awaitingUpload={step.order === awaitingOrder}
+              submitted={step.order === awaitingOrder && currentStepSubmitted}
               onUploaded={load}
+              onAdvance={onAdvance}
             />
           ))}
         </div>

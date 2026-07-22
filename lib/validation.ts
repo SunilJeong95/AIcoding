@@ -45,5 +45,6 @@ export type StepCreateInput = z.infer<typeof stepCreateSchema>;
 export const stepUpdateSchema = z.object({
   textContent: z.string().max(20000).optional(),
   imageContent: z.string().max(1024).nullable().optional(),
+  requiresUpload: z.boolean().optional(),
 });
 export type StepUpdateInput = z.infer<typeof stepUpdateSchema>;

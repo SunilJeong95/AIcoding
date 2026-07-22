@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import PhotoUpload from "./PhotoUpload";
 
 export interface StepData {
@@ -7,23 +8,47 @@ export interface StepData {
   order: number;
   textContent: string;
   imageContent: string | null;
+  requiresUpload: boolean;
 }
 
 interface StepViewerProps {
   step: StepData;
   totalSteps: number;
-  // True only for the single step currently awaiting a photo upload. When false,
+  // True only for the single step currently awaiting completion. When false,
   // the step is already completed and shown read-only.
   awaitingUpload: boolean;
+  // Whether the awaiting step already has an "uploaded" Submission — gates the
+  // "다음" button for requiresUpload steps. Ignored otherwise.
+  submitted: boolean;
   onUploaded: () => void;
+  onAdvance: () => Promise<void>;
 }
 
 export default function StepViewer({
   step,
   totalSteps,
   awaitingUpload,
+  submitted,
   onUploaded,
+  onAdvance,
 }: StepViewerProps) {
+  const [advancing, setAdvancing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleAdvance() {
+    setError(null);
+    setAdvancing(true);
+    try {
+      await onAdvance();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "다음 단계로 넘어가지 못했습니다.");
+    } finally {
+      setAdvancing(false);
+    }
+  }
+
+  const nextEnabled = step.requiresUpload ? submitted : true;
+
   return (
     <section
       className={`rounded-2xl border bg-white p-6 shadow-soft transition ${
@@ -65,8 +90,22 @@ export default function StepViewer({
       )}
 
       {awaitingUpload && (
-        <div className="mt-4 border-t border-ink-100 pt-4">
-          <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
+        <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
+          {step.requiresUpload && (
+            <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
+          )}
+          <button
+            type="button"
+            onClick={handleAdvance}
+            disabled={!nextEnabled || advancing}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {advancing && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
+            다음
+          </button>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
         </div>
       )}
     </section>

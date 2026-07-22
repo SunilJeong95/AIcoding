@@ -20,13 +20,20 @@ export async function GET() {
     prisma.step.findMany({
       where: { courseId: 1, order: { lte: currentStepOrder } },
       orderBy: { order: "asc" },
-      select: { id: true, order: true, textContent: true, imageContent: true },
+      select: {
+        id: true,
+        order: true,
+        textContent: true,
+        imageContent: true,
+        requiresUpload: true,
+      },
     }),
   ]);
 
-  // The step at currentStepOrder normally has no submission (uploading advances
-  // past it). The one exception is the last step, whose order caps — so this flag
-  // is how the client knows the final step is complete (nothing left to upload).
+  // Whether the step at currentStepOrder has an "uploaded" Submission yet —
+  // for requiresUpload steps this gates the "다음" button; for the last step
+  // it's also how the client knows the course is fully complete (see
+  // /api/student/advance, which upserts a Submission even for no-upload steps).
   const currentStep = steps.find((s) => s.order === currentStepOrder);
   let currentStepSubmitted = false;
   if (currentStep) {

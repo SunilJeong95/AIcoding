@@ -38,9 +38,14 @@ export async function PUT(
     );
   }
 
-  const data: { textContent?: string; imageContent?: string | null } = {};
+  const data: {
+    textContent?: string;
+    imageContent?: string | null;
+    requiresUpload?: boolean;
+  } = {};
   if (parsed.data.textContent !== undefined) data.textContent = parsed.data.textContent;
   if (parsed.data.imageContent !== undefined) data.imageContent = parsed.data.imageContent;
+  if (parsed.data.requiresUpload !== undefined) data.requiresUpload = parsed.data.requiresUpload;
 
   const updated = await prisma.step.update({ where: { id }, data });
   return NextResponse.json({ step: updated });
