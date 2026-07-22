@@ -69,8 +69,9 @@ export default function CodeManager() {
           : `${data.createdCount}개의 코드를 생성했습니다.`,
       );
       await load();
-    } catch {
-      setError("네트워크 오류가 발생했습니다");
+    } catch (e) {
+      const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      setError(`네트워크 오류가 발생했습니다 (${detail})`);
     } finally {
       setBusy(false);
     }
