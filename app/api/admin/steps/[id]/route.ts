@@ -69,16 +69,13 @@ export async function DELETE(
   await prisma.$transaction(async (tx) => {
     await tx.step.delete({ where: { id } });
 
-    // Shift every step that came after the deleted one down by one, in order,
-    // to keep the @@unique([courseId, order]) constraint satisfied at each step.
-    const after = await tx.step.findMany({
+    // Shift every step that came after the deleted one down by one in a single
+    // statement — keeps the @@unique([courseId, order]) constraint satisfied
+    // without a per-row round trip.
+    await tx.step.updateMany({
       where: { courseId: 1, order: { gt: step.order } },
-      orderBy: { order: "asc" },
-      select: { id: true, order: true },
+      data: { order: { decrement: 1 } },
     });
-    for (const s of after) {
-      await tx.step.update({ where: { id: s.id }, data: { order: s.order - 1 } });
-    }
   });
 
   return NextResponse.json({ ok: true });
