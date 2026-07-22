@@ -14,14 +14,15 @@ export async function GET() {
 
   const { currentStepOrder } = auth.student;
 
-  const totalSteps = await prisma.step.count({ where: { courseId: 1 } });
-
   // Gate at the query level — future steps never leave the server.
-  const steps = await prisma.step.findMany({
-    where: { courseId: 1, order: { lte: currentStepOrder } },
-    orderBy: { order: "asc" },
-    select: { id: true, order: true, textContent: true, imageContent: true },
-  });
+  const [totalSteps, steps] = await Promise.all([
+    prisma.step.count({ where: { courseId: 1 } }),
+    prisma.step.findMany({
+      where: { courseId: 1, order: { lte: currentStepOrder } },
+      orderBy: { order: "asc" },
+      select: { id: true, order: true, textContent: true, imageContent: true },
+    }),
+  ]);
 
   // The step at currentStepOrder normally has no submission (uploading advances
   // past it). The one exception is the last step, whose order caps — so this flag

@@ -30,9 +30,14 @@ export default function AdminNav({ name }: { name: string }) {
     <header className="sticky top-0 z-10 border-b border-ink-200/70 bg-white/85 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
         <div className="flex items-center gap-6">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-            실
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
+              실
+            </span>
+            <span className="hidden text-sm font-semibold text-ink-900 sm:inline">
+              실습 교육 관리자
+            </span>
+          </div>
           <nav className="flex items-center gap-1">
             {LINKS.map((l) => {
               const active = pathname === l.href;
