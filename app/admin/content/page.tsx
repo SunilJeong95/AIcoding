@@ -28,7 +28,7 @@ export default async function AdminContentPage() {
               교육 콘텐츠 관리
             </h1>
             <p className="mt-1 text-sm text-ink-500">
-              총 {steps.length}개의 step이 등록되어 있습니다.
+              총 {steps.length}개의 주제가 등록되어 있습니다.
             </p>
           </div>
           <AddStepButton />
@@ -37,7 +37,7 @@ export default async function AdminContentPage() {
         {steps.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ink-300 bg-white p-10 text-center">
             <p className="text-sm text-ink-500">
-              아직 등록된 step이 없습니다. &quot;step 추가&quot;로 시작하세요.
+              아직 등록된 주제가 없습니다. &quot;주제 추가&quot;로 시작하세요.
             </p>
           </div>
         ) : (
@@ -54,8 +54,8 @@ export default async function AdminContentPage() {
                       {step.order}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-ink-900">
-                        Step {step.order}
+                      <p className="truncate font-semibold text-ink-900">
+                        {step.topic || `Step ${step.order}`}
                       </p>
                       <p className="truncate text-sm text-ink-500">
                         {preview || "(내용 없음)"}

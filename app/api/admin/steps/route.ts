@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     data: {
       courseId: 1,
       order: nextOrder,
+      topic: parsed.data.topic,
       textContent: parsed.data.textContent,
     },
   });

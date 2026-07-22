@@ -11,21 +11,30 @@ export async function GET() {
     return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
   }
 
-  const [totalSteps, students] = await Promise.all([
+  const [totalSteps, students, steps] = await Promise.all([
     prisma.step.count(),
     prisma.student.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.step.findMany({
+      where: { courseId: 1 },
+      select: { order: true, topic: true },
+    }),
   ]);
+  const topicByOrder = new Map(steps.map((s) => [s.order, s.topic]));
 
   return NextResponse.json({
     totalSteps,
-    students: students.map((s) => ({
-      id: s.id,
-      name: s.name,
-      employeeId: s.employeeId,
-      aiTool: s.aiTool,
-      currentStepOrder: s.currentStepOrder,
-      totalSteps,
-      progress: `${Math.min(s.currentStepOrder, totalSteps)}/${totalSteps}`,
-    })),
+    students: students.map((s) => {
+      const cappedOrder = Math.min(s.currentStepOrder, totalSteps);
+      return {
+        id: s.id,
+        name: s.name,
+        employeeId: s.employeeId,
+        aiTool: s.aiTool,
+        currentStepOrder: s.currentStepOrder,
+        currentStepTopic: topicByOrder.get(cappedOrder) || null,
+        totalSteps,
+        progress: `${cappedOrder}/${totalSteps}`,
+      };
+    }),
   });
 }

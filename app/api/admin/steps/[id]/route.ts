@@ -39,10 +39,12 @@ export async function PUT(
   }
 
   const data: {
+    topic?: string;
     textContent?: string;
     imageContent?: string | null;
     requiresUpload?: boolean;
   } = {};
+  if (parsed.data.topic !== undefined) data.topic = parsed.data.topic;
   if (parsed.data.textContent !== undefined) data.textContent = parsed.data.textContent;
   if (parsed.data.imageContent !== undefined) data.imageContent = parsed.data.imageContent;
   if (parsed.data.requiresUpload !== undefined) data.requiresUpload = parsed.data.requiresUpload;

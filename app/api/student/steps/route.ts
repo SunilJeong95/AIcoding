@@ -23,6 +23,7 @@ export async function GET() {
       select: {
         id: true,
         order: true,
+        topic: true,
         textContent: true,
         imageContent: true,
         requiresUpload: true,

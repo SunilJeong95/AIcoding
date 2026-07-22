@@ -17,7 +17,10 @@ export default async function StepEditorPage({
   if (!admin) redirect("/admin/login");
 
   const { stepId } = await params;
-  const step = await prisma.step.findUnique({ where: { id: stepId } });
+  const [step, totalSteps] = await Promise.all([
+    prisma.step.findUnique({ where: { id: stepId } }),
+    prisma.step.count({ where: { courseId: 1 } }),
+  ]);
   if (!step) notFound();
 
   return (
@@ -32,7 +35,7 @@ export default async function StepEditorPage({
             ← 콘텐츠 목록
           </Link>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink-900">
-            Step {step.order} 편집
+            {step.topic || `Step ${step.order}`} 편집
           </h1>
         </div>
 
@@ -40,6 +43,8 @@ export default async function StepEditorPage({
           <StepEditor
             stepId={step.id}
             order={step.order}
+            totalSteps={totalSteps}
+            initialTopic={step.topic}
             initialText={step.textContent}
             initialImage={step.imageContent}
             initialRequiresUpload={step.requiresUpload}

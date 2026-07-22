@@ -37,12 +37,14 @@ export type CodeGenerateInput = z.infer<typeof codeGenerateSchema>;
 
 // POST /api/admin/steps  (create)
 export const stepCreateSchema = z.object({
+  topic: z.string().trim().min(1, "주제를 입력하세요").max(200),
   textContent: z.string().max(20000).optional().default(""),
 });
 export type StepCreateInput = z.infer<typeof stepCreateSchema>;
 
 // PUT /api/admin/steps/[id]  (update)
 export const stepUpdateSchema = z.object({
+  topic: z.string().trim().min(1, "주제를 입력하세요").max(200).optional(),
   textContent: z.string().max(20000).optional(),
   imageContent: z.string().max(1024).nullable().optional(),
   requiresUpload: z.boolean().optional(),

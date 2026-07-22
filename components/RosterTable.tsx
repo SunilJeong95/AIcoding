@@ -8,6 +8,7 @@ interface RosterRow {
   employeeId: string;
   aiTool: string;
   currentStepOrder: number;
+  currentStepTopic: string | null;
   totalSteps: number;
   progress: string;
 }
@@ -75,12 +76,13 @@ export default function RosterTable() {
                 <th className="px-5 py-3">사번</th>
                 <th className="px-5 py-3">AI 도구</th>
                 <th className="px-5 py-3">진행 단계</th>
+                <th className="px-5 py-3">현재 주제</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-100">
               {rows.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-14 text-center text-sm text-ink-400">
+                  <td colSpan={5} className="px-5 py-14 text-center text-sm text-ink-400">
                     아직 입장한 학생이 없습니다.
                   </td>
                 </tr>
@@ -98,6 +100,9 @@ export default function RosterTable() {
                     </td>
                     <td className="px-5 py-3.5 tabular-nums text-ink-700">
                       {r.progress}
+                    </td>
+                    <td className="px-5 py-3.5 text-ink-700">
+                      {r.currentStepTopic ?? "—"}
                     </td>
                   </tr>
                 ))

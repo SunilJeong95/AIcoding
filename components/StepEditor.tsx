@@ -14,18 +14,23 @@ type LockState =
 export default function StepEditor({
   stepId,
   order,
+  totalSteps,
+  initialTopic,
   initialText,
   initialImage,
   initialRequiresUpload,
 }: {
   stepId: string;
   order: number;
+  totalSteps: number;
+  initialTopic: string;
   initialText: string;
   initialImage: string | null;
   initialRequiresUpload: boolean;
 }) {
   const router = useRouter();
   const [lock, setLock] = useState<LockState>({ phase: "acquiring" });
+  const [topic, setTopic] = useState(initialTopic);
   const [text, setText] = useState(initialText);
   const [image, setImage] = useState<string | null>(initialImage);
   const [requiresUpload, setRequiresUpload] = useState(initialRequiresUpload);
@@ -122,7 +127,7 @@ export default function StepEditor({
       const res = await fetch(`/api/admin/steps/${stepId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ textContent: text, requiresUpload }),
+        body: JSON.stringify({ topic, textContent: text, requiresUpload }),
       });
       if (res.status === 403) {
         setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
@@ -184,6 +189,19 @@ export default function StepEditor({
   return (
     <div>
       {readOnly && <LockBanner ownerName={lock.ownerName} />}
+
+      <label className="mb-2 block text-sm font-medium text-ink-700">
+        주제
+      </label>
+      <input
+        type="text"
+        value={topic}
+        onChange={(e) => setTopic(e.target.value)}
+        readOnly={readOnly}
+        maxLength={200}
+        className="mb-6 w-full rounded-xl border border-ink-200 px-3.5 py-2.5 text-ink-900 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 read-only:bg-ink-50 read-only:text-ink-500"
+        placeholder="이 step의 주제를 입력하세요."
+      />
 
       <label className="mb-2 block text-sm font-medium text-ink-700">
         본문 내용
@@ -291,12 +309,17 @@ export default function StepEditor({
               </button>
             </div>
             <div className="p-5">
-              <h2 className="mb-4 flex items-center gap-2.5 text-lg font-bold text-ink-900">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
+              <div className="mb-4 flex items-center gap-2.5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
                   {order}
                 </span>
-                Step {order}
-              </h2>
+                <h2 className="text-lg font-bold text-ink-900">
+                  {topic || `Step ${order}`}
+                </h2>
+                <span className="text-sm font-normal text-ink-400">
+                  {order}/{totalSteps}
+                </span>
+              </div>
               {text ? (
                 <p className="mb-4 whitespace-pre-wrap leading-relaxed text-ink-700">
                   {text}

@@ -6,6 +6,7 @@ import PhotoUpload from "./PhotoUpload";
 export interface StepData {
   id: string;
   order: number;
+  topic: string;
   textContent: string;
   imageContent: string | null;
   requiresUpload: boolean;
@@ -55,13 +56,12 @@ export default function StepViewer({
         awaitingUpload ? "border-brand-300 ring-1 ring-brand-500/15" : "border-ink-200/70"
       }`}
     >
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-2.5 text-lg font-bold text-ink-900">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
-            {step.order}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex min-w-0 items-center gap-2.5 text-lg font-bold text-ink-900">
+          <span className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold tabular-nums text-brand-700">
+            {step.order}/{totalSteps}
           </span>
-          Step {step.order}
-          <span className="text-sm font-normal text-ink-400">/ {totalSteps}</span>
+          <span className="truncate">{step.topic || `Step ${step.order}`}</span>
         </h2>
         {!awaitingUpload ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">

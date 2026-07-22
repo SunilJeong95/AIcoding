@@ -19,6 +19,7 @@ model Step {
   id             String  @id @default(cuid())
   courseId       Int     @default(1)
   order          Int // 1-based sequential order; unique within course
+  topic          String  @default("") // short title shown instead of "Step N" (admin-set on create)
   textContent    String  @default("")
   imageContent   String? // relative path to a step illustration image (admin-uploaded), nullable
   requiresUpload Boolean @default(true) // if false, students advance via a Next button, no photo needed
