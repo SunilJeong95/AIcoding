@@ -27,6 +27,7 @@ export default function StepEditor({
   const [text, setText] = useState(initialText);
   const [image, setImage] = useState<string | null>(initialImage);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
   // Tracks whether we currently own the lock, so cleanup can release it.
@@ -136,23 +137,28 @@ export default function StepEditor({
     const file = e.target.files?.[0];
     if (!file) return;
     setStatus(null);
-    const form = new FormData();
-    form.append("image", file);
-    const res = await fetch(`/api/admin/steps/${stepId}/image`, {
-      method: "POST",
-      body: form,
-    });
-    if (res.status === 403) {
-      setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
-      return;
+    setUploadingImage(true);
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await fetch(`/api/admin/steps/${stepId}/image`, {
+        method: "POST",
+        body: form,
+      });
+      if (res.status === 403) {
+        setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
+        return;
+      }
+      if (!res.ok) {
+        setStatus("이미지 업로드에 실패했습니다.");
+        return;
+      }
+      const data = await res.json();
+      setImage(data.imageContent);
+      setStatus("이미지가 업로드되었습니다.");
+    } finally {
+      setUploadingImage(false);
     }
-    if (!res.ok) {
-      setStatus("이미지 업로드에 실패했습니다.");
-      return;
-    }
-    const data = await res.json();
-    setImage(data.imageContent);
-    setStatus("이미지가 업로드되었습니다.");
   }
 
   if (lock.phase === "acquiring") {
@@ -192,12 +198,21 @@ export default function StepEditor({
           <p className="mb-3 text-sm text-ink-400">등록된 이미지가 없습니다.</p>
         )}
         {!readOnly && (
-          <input
-            type="file"
-            accept="image/*"
-            onChange={uploadImage}
-            className="block text-sm text-ink-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200"
-          />
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              disabled={uploadingImage}
+              onChange={uploadImage}
+              className="block text-sm text-ink-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            {uploadingImage && (
+              <span className="flex items-center gap-1.5 text-sm text-ink-500">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-300 border-t-ink-600" />
+                업로드 중…
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -208,8 +223,11 @@ export default function StepEditor({
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            {saving && (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
             {saving ? "저장 중…" : "저장"}
           </button>
         </div>

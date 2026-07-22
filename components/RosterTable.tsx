@@ -51,8 +51,11 @@ export default function RosterTable() {
         <button
           onClick={load}
           disabled={loading}
-          className="rounded-lg border border-ink-200 bg-white px-3.5 py-1.5 text-sm font-medium text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3.5 py-1.5 text-sm font-medium text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
+          {loading && (
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-300 border-t-ink-600" />
+          )}
           {loading ? "새로고침 중…" : "새로고침"}
         </button>
       </div>

@@ -47,8 +47,11 @@ export default function DeleteStepButton({
     <button
       onClick={remove}
       disabled={busy}
-      className="rounded-lg border border-rose-200 px-3.5 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3.5 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
     >
+      {busy && (
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-300 border-t-rose-600" />
+      )}
       {busy ? "삭제 중…" : "삭제"}
     </button>
   );

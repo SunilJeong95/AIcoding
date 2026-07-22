@@ -101,8 +101,11 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-pop transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-pop transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {loading && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
             {loading ? "로그인 중…" : "로그인"}
           </button>
         </form>

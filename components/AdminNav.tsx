@@ -62,8 +62,11 @@ export default function AdminNav({ name }: { name: string }) {
           <button
             onClick={logout}
             disabled={loading}
-            className="rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {loading && (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-300 border-t-ink-600" />
+            )}
             {loading ? "로그아웃 중…" : "로그아웃"}
           </button>
         </div>

@@ -133,8 +133,11 @@ export default function StudentLoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {submitting && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
             {submitting ? "입장 중..." : "입장하기"}
           </button>
         </form>

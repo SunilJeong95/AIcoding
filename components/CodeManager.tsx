@@ -136,8 +136,11 @@ export default function CodeManager() {
           <button
             onClick={generate}
             disabled={busy || atCap}
-            className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {busy && (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
             {busy ? "생성 중…" : "코드 생성"}
           </button>
         </div>
@@ -216,8 +219,11 @@ export default function CodeManager() {
                         <button
                           onClick={() => reset(c.id, c.code)}
                           disabled={!inUse || resettingId === c.id}
-                          className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
+                          {resettingId === c.id && (
+                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-rose-300 border-t-rose-600" />
+                          )}
                           {resettingId === c.id ? "초기화 중…" : "Reset"}
                         </button>
                       </td>
