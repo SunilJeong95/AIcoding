@@ -29,6 +29,7 @@ export default function StepEditor({
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Tracks whether we currently own the lock, so cleanup can release it.
   const ownsLock = useRef(false);
@@ -79,6 +80,16 @@ export default function StepEditor({
       }
     };
   }, [stepId]);
+
+  // Close the preview popup on Escape.
+  useEffect(() => {
+    if (!showPreview) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowPreview(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showPreview]);
 
   // Heartbeat every 30s while we hold the lock.
   useEffect(() => {
@@ -218,8 +229,14 @@ export default function StepEditor({
 
       {status && <p className="mt-4 text-sm text-ink-600">{status}</p>}
 
-      {!readOnly && (
-        <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={() => setShowPreview(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-ink-200 px-5 py-2.5 font-medium text-ink-700 transition hover:bg-ink-50"
+        >
+          미리보기
+        </button>
+        {!readOnly && (
           <button
             onClick={save}
             disabled={saving}
@@ -230,6 +247,54 @@ export default function StepEditor({
             )}
             {saving ? "저장 중…" : "저장"}
           </button>
+        )}
+      </div>
+
+      {showPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4"
+          onClick={() => setShowPreview(false)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 flex items-center justify-between border-b border-ink-100 bg-white px-5 py-3.5">
+              <span className="text-sm font-semibold text-ink-500">
+                학생 화면 미리보기
+              </span>
+              <button
+                onClick={() => setShowPreview(false)}
+                aria-label="미리보기 닫기"
+                className="rounded-lg p-1.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5">
+              <h2 className="mb-4 flex items-center gap-2.5 text-lg font-bold text-ink-900">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
+                  {order}
+                </span>
+                Step {order}
+              </h2>
+              {text ? (
+                <p className="mb-4 whitespace-pre-wrap leading-relaxed text-ink-700">
+                  {text}
+                </p>
+              ) : (
+                <p className="mb-4 text-sm text-ink-400">(내용 없음)</p>
+              )}
+              {image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/api/uploads/${image}`}
+                  alt={`Step ${order} 삽화`}
+                  className="max-w-full rounded-xl border border-ink-200"
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
