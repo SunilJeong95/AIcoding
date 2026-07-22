@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 
 // POST /api/admin/codes/[id]/reset — force-logout + recycle a code.
@@ -12,6 +12,7 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) {
     return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });

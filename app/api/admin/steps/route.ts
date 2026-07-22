@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { stepCreateSchema } from "@/lib/validation";
 
@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 // GET /api/admin/steps — all steps in course order (for the editor list).
 export async function GET() {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
@@ -19,6 +20,7 @@ export async function GET() {
 
 // POST /api/admin/steps — append a new step at the end (order = max + 1).
 export async function POST(req: NextRequest) {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { getIronSession, type IronSession } from "iron-session";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { sessionOptions, type SessionData } from "@/lib/session";
 import type { Student } from "@prisma/client";
 
@@ -22,6 +22,7 @@ export interface StudentAuth {
 // row while the encrypted cookie still exists, so a dangling studentId must be
 // treated as "not authenticated" — never allowed to throw.
 export async function getStudentSession(): Promise<StudentAuth | null> {
+  const prisma = getDb();
   const session = await getSession();
   const data = session.student;
   if (!data?.sessionId || !data.studentId) return null;
@@ -51,6 +52,7 @@ export interface AdminAuth {
 
 // Returns the authenticated admin, or null. Same revoked-first discipline.
 export async function getAdminSession(): Promise<AdminAuth | null> {
+  const prisma = getDb();
   const session = await getSession();
   const data = session.admin;
   if (!data?.adminSessionId) return null;

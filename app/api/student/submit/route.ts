@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
 import { saveUpload } from "@/lib/upload";
 
@@ -10,6 +10,7 @@ import { saveUpload } from "@/lib/upload";
 // stepId in the request is only compared, never trusted — a mismatch is rejected so
 // a student cannot POST ahead and bypass the sequential lock.
 export async function POST(req: NextRequest) {
+  const prisma = getDb();
   const auth = await getStudentSession();
   if (!auth) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });

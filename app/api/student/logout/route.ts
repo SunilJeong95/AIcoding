@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 // POST /api/student/logout — clear cookie + mark the Session row revoked.
 export async function POST() {
+  const prisma = getDb();
   const session = await getSession();
   const sessionId = session.student?.sessionId;
 

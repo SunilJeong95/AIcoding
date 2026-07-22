@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { studentLoginSchema } from "@/lib/validation";
 
@@ -10,6 +10,7 @@ import { studentLoginSchema } from "@/lib/validation";
 // aiTool onto the EntryCode and flips status unused → in-use. Subsequent logins with
 // the same code must match the stored name+employeeId (prevents hijacking an in-use code).
 export async function POST(req: NextRequest) {
+  const prisma = getDb();
   let body: unknown;
   try {
     body = await req.json();

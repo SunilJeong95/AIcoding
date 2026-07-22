@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { adminLoginSchema } from "@/lib/validation";
 
@@ -51,6 +51,7 @@ function recordFailure(key: string): void {
 // Each successful login mints its own Session row so multiple admins can be
 // active concurrently as distinct lock owners.
 export async function POST(req: NextRequest) {
+  const prisma = getDb();
   const adminCode = process.env.ADMIN_CODE;
   if (!adminCode) {
     return NextResponse.json(

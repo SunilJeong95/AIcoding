@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 
 // SPEC: open item resolved as heartbeat-based staleness (plan §8, §1 edit-lock
 // timeout). A StepLock whose lastHeartbeatAt is older than 90s is stale and may
@@ -22,6 +22,7 @@ export async function acquireLock(
   ownerName: string,
   ownerSessionId: string,
 ): Promise<AcquireResult> {
+  const prisma = getDb();
   const now = new Date();
   const staleBefore = new Date(now.getTime() - LOCK_STALE_MS);
 
@@ -65,6 +66,7 @@ export async function heartbeatLock(
   stepId: string,
   ownerSessionId: string,
 ): Promise<boolean> {
+  const prisma = getDb();
   const result = await prisma.stepLock.updateMany({
     where: { stepId, ownerSessionId },
     data: { lastHeartbeatAt: new Date() },
@@ -77,6 +79,7 @@ export async function releaseLock(
   stepId: string,
   ownerSessionId: string,
 ): Promise<boolean> {
+  const prisma = getDb();
   const result = await prisma.stepLock.deleteMany({
     where: { stepId, ownerSessionId },
   });
@@ -89,6 +92,7 @@ export async function holdsLock(
   stepId: string,
   ownerSessionId: string,
 ): Promise<boolean> {
+  const prisma = getDb();
   const staleBefore = new Date(Date.now() - LOCK_STALE_MS);
   const lock = await prisma.stepLock.findUnique({ where: { stepId } });
   return (
@@ -104,6 +108,7 @@ export async function holdsLock(
 export async function releaseAllForSession(
   ownerSessionId: string,
 ): Promise<number> {
+  const prisma = getDb();
   const result = await prisma.stepLock.deleteMany({
     where: { ownerSessionId },
   });

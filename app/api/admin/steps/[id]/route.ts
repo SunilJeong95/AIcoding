@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { stepUpdateSchema } from "@/lib/validation";
 import { holdsLock } from "@/lib/locks";
@@ -11,6 +11,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
@@ -52,6 +53,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

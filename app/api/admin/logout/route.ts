@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getSession, getAdminSession } from "@/lib/auth";
 import { releaseAllForSession } from "@/lib/locks";
 
 // POST /api/admin/logout — release any edit locks held by this admin session,
 // revoke the Session row, and clear the cookie.
 export async function POST() {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (admin) {
     await releaseAllForSession(admin.sessionId);

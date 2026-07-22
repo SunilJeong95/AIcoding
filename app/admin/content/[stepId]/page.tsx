@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import AdminNav from "@/components/AdminNav";
 import StepEditor from "@/components/StepEditor";
@@ -12,6 +12,7 @@ export default async function StepEditorPage({
 }: {
   params: Promise<{ stepId: string }>;
 }) {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) redirect("/admin/login");
 

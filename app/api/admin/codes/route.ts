@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { MAX_CODES } from "@/lib/codes";
 
 // GET /api/admin/codes — list all entry codes with status + assignee info.
 export async function GET() {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) {
     return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });

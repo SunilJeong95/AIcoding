@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import AdminNav from "@/components/AdminNav";
 import DeleteStepButton from "@/components/DeleteStepButton";
@@ -9,6 +9,7 @@ import AddStepButton from "@/components/AddStepButton";
 export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
+  const prisma = getDb();
   const admin = await getAdminSession();
   if (!admin) redirect("/admin/login");
 

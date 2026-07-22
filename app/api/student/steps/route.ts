@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
 
 // GET /api/student/steps — server-enforced sequential lock.
 // Only steps with order <= student.currentStepOrder are returned, and locked
 // later steps are NOT exposed at all (no text/image of future steps leaks).
 export async function GET() {
+  const prisma = getDb();
   const auth = await getStudentSession();
   if (!auth) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });

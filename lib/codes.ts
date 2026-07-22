@@ -1,6 +1,6 @@
 import { randomInt } from "crypto";
 import type { EntryCode } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
 
 // Hard cap on total entry codes that can ever exist (spec §1 / plan §6 WU-2).
 export const MAX_CODES = 100;
@@ -32,6 +32,7 @@ export interface GenerateResult {
 // generate calls cannot both read an under-cap count and race past 100. Codes
 // are guaranteed unique both within the batch and against existing rows.
 export async function generateCodes(count: number): Promise<GenerateResult> {
+  const prisma = getDb();
   return prisma.$transaction(async (tx) => {
     const existingCount = await tx.entryCode.count();
     const capacityBefore = Math.max(0, MAX_CODES - existingCount);
