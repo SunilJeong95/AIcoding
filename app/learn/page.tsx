@@ -54,7 +54,7 @@ export default function LearnPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-gray-500">
+      <main className="flex min-h-screen items-center justify-center bg-ink-50 text-sm text-ink-500">
         불러오는 중...
       </main>
     );
@@ -62,11 +62,11 @@ export default function LearnPage() {
 
   if (error) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-red-700">{error}</p>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-ink-50">
+        <p className="text-sm text-rose-700">{error}</p>
         <button
           onClick={load}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           다시 시도
         </button>
@@ -84,24 +84,36 @@ export default function LearnPage() {
     totalSteps > 0 &&
     currentStepOrder >= totalSteps &&
     currentStepSubmitted;
+  const progressPct =
+    totalSteps > 0 ? Math.min(100, Math.round((currentStepOrder / totalSteps) * 100)) : 0;
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4">
-      <div className="mx-auto max-w-2xl space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">실습 교육</h1>
-            <p className="text-sm text-gray-500">
-              {studentName ? `${studentName}님` : ""} · 진행 {currentStepOrder}/
-              {totalSteps}
-            </p>
+    <main className="min-h-screen bg-ink-50 pb-16">
+      <div className="mx-auto max-w-2xl space-y-6 p-4 pt-6">
+        <header className="rounded-2xl border border-ink-200/70 bg-white p-5 shadow-soft">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-ink-900">
+                실습 교육
+              </h1>
+              <p className="mt-0.5 text-sm text-ink-500">
+                {studentName ? `${studentName}님 · ` : ""}진행 {currentStepOrder}/
+                {totalSteps}
+              </p>
+            </div>
+            <button
+              onClick={onLogout}
+              className="rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-600 transition hover:bg-ink-50"
+            >
+              로그아웃
+            </button>
           </div>
-          <button
-            onClick={onLogout}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-100"
-          >
-            로그아웃
-          </button>
+          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
+            <div
+              className="h-full rounded-full bg-brand-500 transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
         </header>
 
         <div className="space-y-4">
@@ -117,9 +129,12 @@ export default function LearnPage() {
         </div>
 
         {allDone && (
-          <p className="rounded-xl bg-green-50 p-4 text-center font-medium text-green-700">
-            모든 단계를 완료했습니다. 수고하셨습니다!
-          </p>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+            <p className="text-2xl">🎉</p>
+            <p className="mt-2 font-semibold text-emerald-800">
+              모든 단계를 완료했습니다. 수고하셨습니다!
+            </p>
+          </div>
         )}
       </div>
     </main>

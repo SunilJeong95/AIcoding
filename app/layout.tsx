@@ -13,7 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <head>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+      </head>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }

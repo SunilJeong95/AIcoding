@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const AI_TOOLS = ["Cursor", "GitHub Copilot", "Claude", "Codex"] as const;
 
@@ -38,88 +39,106 @@ export default function StudentLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-5 rounded-xl bg-white p-8 shadow-sm"
-      >
-        <h1 className="text-center text-2xl font-bold">실습 교육 입장</h1>
-
-        <div className="space-y-1">
-          <label htmlFor="name" className="block text-sm font-medium">
-            이름
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="employeeId" className="block text-sm font-medium">
-            사번
-          </label>
-          <input
-            id="employeeId"
-            type="text"
-            value={employeeId}
-            onChange={(e) => setEmployeeId(e.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="aiTool" className="block text-sm font-medium">
-            사용 AI 도구
-          </label>
-          <select
-            id="aiTool"
-            value={aiTool}
-            onChange={(e) => setAiTool(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+    <main className="flex min-h-screen items-center justify-center bg-ink-50 p-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 text-center">
+          <Link
+            href="/"
+            className="text-xs font-medium text-ink-400 hover:text-ink-600"
           >
-            {AI_TOOLS.map((tool) => (
-              <option key={tool} value={tool}>
-                {tool}
-              </option>
-            ))}
-          </select>
+            ← 홈으로
+          </Link>
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="code" className="block text-sm font-medium">
-            참가 코드
-          </label>
-          <input
-            id="code"
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            autoCapitalize="characters"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+        <form
+          onSubmit={onSubmit}
+          className="w-full space-y-5 rounded-3xl border border-ink-200/70 bg-white p-8 shadow-card"
         >
-          {submitting ? "입장 중..." : "입장하기"}
-        </button>
-      </form>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-ink-900">
+              실습 교육 입장
+            </h1>
+            <p className="mt-1.5 text-sm text-ink-500">
+              발급받은 참가 코드로 입장하세요.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="name" className="block text-sm font-medium text-ink-700">
+              이름
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-ink-900 placeholder:text-ink-400 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="employeeId" className="block text-sm font-medium text-ink-700">
+              사번
+            </label>
+            <input
+              id="employeeId"
+              type="text"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+              required
+              className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-ink-900 placeholder:text-ink-400 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="aiTool" className="block text-sm font-medium text-ink-700">
+              사용 AI 도구
+            </label>
+            <select
+              id="aiTool"
+              value={aiTool}
+              onChange={(e) => setAiTool(e.target.value)}
+              className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-ink-900 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+            >
+              {AI_TOOLS.map((tool) => (
+                <option key={tool} value={tool}>
+                  {tool}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="code" className="block text-sm font-medium text-ink-700">
+              참가 코드
+            </label>
+            <input
+              id="code"
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              autoCapitalize="characters"
+              className="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 font-mono tracking-wide text-ink-900 placeholder:text-ink-400 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+            />
+          </div>
+
+          {error && (
+            <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "입장 중..." : "입장하기"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

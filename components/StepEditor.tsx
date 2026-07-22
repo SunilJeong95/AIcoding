@@ -156,7 +156,7 @@ export default function StepEditor({
   }
 
   if (lock.phase === "acquiring") {
-    return <p className="text-gray-500">편집 권한을 확인하는 중…</p>;
+    return <p className="text-sm text-ink-500">편집 권한을 확인하는 중…</p>;
   }
 
   const readOnly = lock.phase === "readonly";
@@ -165,7 +165,7 @@ export default function StepEditor({
     <div>
       {readOnly && <LockBanner ownerName={lock.ownerName} />}
 
-      <label className="mb-2 block text-sm font-medium text-gray-700">
+      <label className="mb-2 block text-sm font-medium text-ink-700">
         본문 내용
       </label>
       <textarea
@@ -173,12 +173,12 @@ export default function StepEditor({
         onChange={(e) => setText(e.target.value)}
         readOnly={readOnly}
         rows={12}
-        className="w-full rounded-md border border-gray-300 p-3 font-mono text-sm read-only:bg-gray-50 read-only:text-gray-500"
+        className="w-full rounded-xl border border-ink-200 p-3.5 font-mono text-sm text-ink-900 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 read-only:bg-ink-50 read-only:text-ink-500"
         placeholder="이 step의 실습 안내 내용을 입력하세요."
       />
 
       <div className="mt-6">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label className="mb-2 block text-sm font-medium text-ink-700">
           삽화 이미지
         </label>
         {image ? (
@@ -186,29 +186,29 @@ export default function StepEditor({
           <img
             src={`/api/uploads/${image}`}
             alt={`Step ${order} 삽화`}
-            className="mb-3 max-h-64 rounded-md border border-gray-200"
+            className="mb-3 max-h-64 rounded-xl border border-ink-200"
           />
         ) : (
-          <p className="mb-3 text-sm text-gray-400">등록된 이미지가 없습니다.</p>
+          <p className="mb-3 text-sm text-ink-400">등록된 이미지가 없습니다.</p>
         )}
         {!readOnly && (
           <input
             type="file"
             accept="image/*"
             onChange={uploadImage}
-            className="block text-sm"
+            className="block text-sm text-ink-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200"
           />
         )}
       </div>
 
-      {status && <p className="mt-4 text-sm text-gray-600">{status}</p>}
+      {status && <p className="mt-4 text-sm text-ink-600">{status}</p>}
 
       {!readOnly && (
         <div className="mt-6 flex gap-3">
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-md bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "저장 중…" : "저장"}
           </button>

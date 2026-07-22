@@ -47,7 +47,7 @@ export default function DeleteStepButton({
     <button
       onClick={remove}
       disabled={busy}
-      className="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+      className="rounded-lg border border-rose-200 px-3.5 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {busy ? "삭제 중…" : "삭제"}
     </button>

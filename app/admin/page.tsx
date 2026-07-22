@@ -12,7 +12,7 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ink-50">
       <AdminNav name={admin.name} />
       <main className="mx-auto max-w-5xl px-6 py-8">
         <RosterTable />

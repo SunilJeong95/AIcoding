@@ -43,57 +43,65 @@ export default function RosterTable() {
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">학생 현황</h2>
-          <p className="text-sm text-gray-500">총 {rows.length}명</p>
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">
+            학생 현황
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">총 {rows.length}명 입장</p>
         </div>
         <button
           onClick={load}
           disabled={loading}
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          className="rounded-lg border border-ink-200 bg-white px-3.5 py-1.5 text-sm font-medium text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "새로고침 중…" : "새로고침"}
         </button>
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
           {error}
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl ring-1 ring-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-4 py-3">이름</th>
-              <th className="px-4 py-3">사번</th>
-              <th className="px-4 py-3">AI 도구</th>
-              <th className="px-4 py-3">진행 단계</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {rows.length === 0 && !loading ? (
+      <div className="overflow-hidden rounded-2xl border border-ink-200/70 bg-white shadow-soft">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-ink-100 text-sm">
+            <thead className="bg-ink-50 text-left text-xs font-semibold uppercase tracking-wide text-ink-500">
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
-                  아직 입장한 학생이 없습니다.
-                </td>
+                <th className="px-5 py-3">이름</th>
+                <th className="px-5 py-3">사번</th>
+                <th className="px-5 py-3">AI 도구</th>
+                <th className="px-5 py-3">진행 단계</th>
               </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {r.name}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{r.employeeId}</td>
-                  <td className="px-4 py-3 text-gray-700">{r.aiTool}</td>
-                  <td className="px-4 py-3 tabular-nums text-gray-700">
-                    {r.progress}
+            </thead>
+            <tbody className="divide-y divide-ink-100">
+              {rows.length === 0 && !loading ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-14 text-center text-sm text-ink-400">
+                    아직 입장한 학생이 없습니다.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                rows.map((r) => (
+                  <tr key={r.id} className="transition hover:bg-ink-50/60">
+                    <td className="px-5 py-3.5 font-medium text-ink-900">
+                      {r.name}
+                    </td>
+                    <td className="px-5 py-3.5 text-ink-600">{r.employeeId}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex rounded-full bg-ink-100 px-2.5 py-0.5 text-xs font-medium text-ink-600">
+                        {r.aiTool}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 tabular-nums text-ink-700">
+                      {r.progress}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );

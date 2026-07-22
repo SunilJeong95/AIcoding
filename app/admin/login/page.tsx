@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -35,63 +36,77 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-5 rounded-xl bg-white p-8 shadow-sm ring-1 ring-gray-200"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">관리자 로그인</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            관리자 코드와 이름을 입력하세요.
-          </p>
+    <main className="flex min-h-screen items-center justify-center bg-ink-950 p-6">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 text-center">
+          <Link
+            href="/"
+            className="text-xs font-medium text-ink-500 hover:text-ink-300"
+          >
+            ← 홈으로
+          </Link>
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="name" className="text-sm font-medium text-gray-700">
-            이름
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            maxLength={50}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="홍길동"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="code" className="text-sm font-medium text-gray-700">
-            관리자 코드
-          </label>
-          <input
-            id="code"
-            type="password"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="관리자 코드"
-          />
-        </div>
-
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+        <form
+          onSubmit={onSubmit}
+          className="w-full space-y-5 rounded-3xl border border-white/10 bg-ink-900 p-8 shadow-card"
         >
-          {loading ? "로그인 중…" : "로그인"}
-        </button>
-      </form>
+          <div>
+            <span className="inline-flex rounded-lg bg-brand-500/15 px-2.5 py-1 text-xs font-semibold text-brand-300">
+              ADMIN
+            </span>
+            <h1 className="mt-3 text-2xl font-bold text-white">관리자 로그인</h1>
+            <p className="mt-1 text-sm text-ink-400">
+              관리자 코드와 이름을 입력하세요.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="name" className="text-sm font-medium text-ink-300">
+              이름
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              maxLength={50}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-ink-500 transition focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/20"
+              placeholder="홍길동"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="code" className="text-sm font-medium text-ink-300">
+              관리자 코드
+            </label>
+            <input
+              id="code"
+              type="password"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-ink-500 transition focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/20"
+              placeholder="관리자 코드"
+            />
+          </div>
+
+          {error && (
+            <p className="rounded-xl bg-rose-500/10 px-3.5 py-2.5 text-sm text-rose-300">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white shadow-pop transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "로그인 중…" : "로그인"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

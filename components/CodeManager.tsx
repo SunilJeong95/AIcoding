@@ -111,14 +111,16 @@ export default function CodeManager() {
     <section className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">참가 코드 관리</h2>
-          <p className="text-sm text-gray-500">
-            총 {total} / {MAX_CODES}개
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">
+            참가 코드 관리
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            총 <span className="font-medium text-ink-700">{total}</span> / {MAX_CODES}개
           </p>
         </div>
         <div className="flex items-end gap-2">
-          <div className="space-y-1">
-            <label htmlFor="count" className="text-xs font-medium text-gray-600">
+          <div className="space-y-1.5">
+            <label htmlFor="count" className="text-xs font-medium text-ink-500">
               생성 수량
             </label>
             <input
@@ -128,13 +130,13 @@ export default function CodeManager() {
               max={MAX_CODES}
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-24 rounded-lg border border-ink-200 bg-white px-3.5 py-2 text-ink-900 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
             />
           </div>
           <button
             onClick={generate}
             disabled={busy || atCap}
-            className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-lg bg-brand-600 px-4 py-2 font-medium text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy ? "생성 중…" : "코드 생성"}
           </button>
@@ -142,83 +144,90 @@ export default function CodeManager() {
       </div>
 
       {atCap && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+        <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
           최대 {MAX_CODES}개에 도달하여 더 이상 생성할 수 없습니다.
         </p>
       )}
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
           {error}
         </p>
       )}
       {notice && (
-        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+        <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
           {notice}
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl ring-1 ring-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-4 py-3">코드</th>
-              <th className="px-4 py-3">상태</th>
-              <th className="px-4 py-3">이름</th>
-              <th className="px-4 py-3">사번</th>
-              <th className="px-4 py-3">AI 도구</th>
-              <th className="px-4 py-3 text-right">작업</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {codes.length === 0 && !loading ? (
+      <div className="overflow-hidden rounded-2xl border border-ink-200/70 bg-white shadow-soft">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-ink-100 text-sm">
+            <thead className="bg-ink-50 text-left text-xs font-semibold uppercase tracking-wide text-ink-500">
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                  생성된 코드가 없습니다.
-                </td>
+                <th className="px-5 py-3">코드</th>
+                <th className="px-5 py-3">상태</th>
+                <th className="px-5 py-3">이름</th>
+                <th className="px-5 py-3">사번</th>
+                <th className="px-5 py-3">AI 도구</th>
+                <th className="px-5 py-3 text-right">작업</th>
               </tr>
-            ) : (
-              codes.map((c) => {
-                const inUse = c.status === "in-use";
-                return (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono font-medium text-gray-900">
-                      {c.code}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          inUse
-                            ? "bg-blue-50 text-blue-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {inUse ? "사용중" : "미사용"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {c.assignedStudentName ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {c.assignedEmployeeId ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {c.aiTool ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => reset(c.id, c.code)}
-                        disabled={!inUse || resettingId === c.id}
-                        className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {resettingId === c.id ? "초기화 중…" : "Reset"}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-ink-100">
+              {codes.length === 0 && !loading ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-14 text-center text-sm text-ink-400">
+                    생성된 코드가 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                codes.map((c) => {
+                  const inUse = c.status === "in-use";
+                  return (
+                    <tr key={c.id} className="transition hover:bg-ink-50/60">
+                      <td className="px-5 py-3.5 font-mono font-medium tracking-wide text-ink-900">
+                        {c.code}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            inUse
+                              ? "bg-brand-50 text-brand-700"
+                              : "bg-ink-100 text-ink-500"
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              inUse ? "bg-brand-500" : "bg-ink-400"
+                            }`}
+                          />
+                          {inUse ? "사용중" : "미사용"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-ink-700">
+                        {c.assignedStudentName ?? "—"}
+                      </td>
+                      <td className="px-5 py-3.5 text-ink-700">
+                        {c.assignedEmployeeId ?? "—"}
+                      </td>
+                      <td className="px-5 py-3.5 text-ink-700">
+                        {c.aiTool ?? "—"}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => reset(c.id, c.code)}
+                          disabled={!inUse || resettingId === c.id}
+                          className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {resettingId === c.id ? "초기화 중…" : "Reset"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );

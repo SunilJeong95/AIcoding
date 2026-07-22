@@ -27,32 +27,37 @@ export default function AdminNav({ name }: { name: string }) {
   }
 
   return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-        <nav className="flex items-center gap-1">
-          {LINKS.map((l) => {
-            const active = pathname === l.href;
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                  active
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
+    <header className="sticky top-0 z-10 border-b border-ink-200/70 bg-white/85 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
+        <div className="flex items-center gap-6">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
+            실
+          </span>
+          <nav className="flex items-center gap-1">
+            {LINKS.map((l) => {
+              const active = pathname === l.href;
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                    active
+                      ? "bg-brand-50 text-brand-700"
+                      : "text-ink-600 hover:bg-ink-100 hover:text-ink-900"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">{name} 님</span>
+          <span className="text-sm text-ink-500">{name} 님</span>
           <button
             onClick={logout}
             disabled={loading}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            className="rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-700 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "로그아웃 중…" : "로그아웃"}
           </button>

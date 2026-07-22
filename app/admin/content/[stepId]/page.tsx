@@ -21,22 +21,29 @@ export default async function StepEditorPage({
   if (!step) notFound();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-ink-50">
       <AdminNav name={admin.name} />
       <main className="mx-auto max-w-3xl px-6 py-10">
-      <div className="mb-6">
-        <Link href="/admin/content" className="text-sm text-blue-600 hover:underline">
-          ← 콘텐츠 목록
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold">Step {step.order} 편집</h1>
-      </div>
+        <div className="mb-6">
+          <Link
+            href="/admin/content"
+            className="text-sm font-medium text-brand-600 hover:text-brand-700"
+          >
+            ← 콘텐츠 목록
+          </Link>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink-900">
+            Step {step.order} 편집
+          </h1>
+        </div>
 
-      <StepEditor
-        stepId={step.id}
-        order={step.order}
-        initialText={step.textContent}
-        initialImage={step.imageContent}
-      />
+        <div className="rounded-2xl border border-ink-200/70 bg-white p-6 shadow-soft">
+          <StepEditor
+            stepId={step.id}
+            order={step.order}
+            initialText={step.textContent}
+            initialImage={step.imageContent}
+          />
+        </div>
       </main>
     </div>
   );

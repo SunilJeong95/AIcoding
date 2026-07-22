@@ -56,12 +56,22 @@ export default function PhotoUpload({ stepId, onUploaded }: PhotoUploadProps) {
         type="button"
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
-        className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {uploading ? "업로드 중입니다..." : "실습 사진 업로드"}
+        {uploading ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            업로드 중입니다...
+          </>
+        ) : (
+          <>
+            <span aria-hidden>📷</span>
+            실습 사진 업로드
+          </>
+        )}
       </button>
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
           {error}
         </p>
       )}
