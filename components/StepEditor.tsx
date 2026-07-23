@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 import LockBanner from "@/components/LockBanner";
 
 const HEARTBEAT_MS = 30 * 1000;
@@ -36,11 +37,14 @@ export default function StepEditor({
   const [requiresUpload, setRequiresUpload] = useState(initialRequiresUpload);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [insertingImage, setInsertingImage] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
   // Tracks whether we currently own the lock, so cleanup can release it.
   const ownsLock = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inlineImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,6 +184,69 @@ export default function StepEditor({
     }
   }
 
+  // Wraps the current textarea selection with markdown syntax (bold/italic),
+  // or inserts at the cursor if nothing is selected.
+  function wrapSelection(mark: string) {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const { selectionStart, selectionEnd, value } = ta;
+    const selected = value.slice(selectionStart, selectionEnd);
+    const next =
+      value.slice(0, selectionStart) + mark + selected + mark + value.slice(selectionEnd);
+    setText(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(selectionStart + mark.length, selectionEnd + mark.length);
+    });
+  }
+
+  // Prefixes the current line with "## " (markdown heading).
+  function insertHeading() {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const { selectionStart, value } = ta;
+    const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
+    const next = value.slice(0, lineStart) + "## " + value.slice(lineStart);
+    setText(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(selectionStart + 3, selectionStart + 3);
+    });
+  }
+
+  // Uploads an image (without touching Step.imageContent — see the
+  // inline-image route) and inserts markdown image syntax at the cursor.
+  async function insertInlineImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStatus(null);
+    setInsertingImage(true);
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await fetch(`/api/admin/steps/${stepId}/inline-image`, {
+        method: "POST",
+        body: form,
+      });
+      if (res.status === 403) {
+        setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
+        return;
+      }
+      if (!res.ok) {
+        setStatus("이미지 삽입에 실패했습니다.");
+        return;
+      }
+      const data = await res.json();
+      const ta = textareaRef.current;
+      const pos = ta ? ta.selectionStart : text.length;
+      const markdown = `\n![](/api/uploads/${data.path})\n`;
+      setText(text.slice(0, pos) + markdown + text.slice(pos));
+    } finally {
+      setInsertingImage(false);
+      if (inlineImageInputRef.current) inlineImageInputRef.current.value = "";
+    }
+  }
+
   if (lock.phase === "acquiring") {
     return <p className="text-sm text-ink-500">편집 권한을 확인하는 중…</p>;
   }
@@ -203,17 +270,73 @@ export default function StepEditor({
         placeholder="이 step의 주제를 입력하세요."
       />
 
-      <label className="mb-2 block text-sm font-medium text-ink-700">
-        본문 내용
-      </label>
+      <div className="mb-2 flex items-center justify-between">
+        <label className="block text-sm font-medium text-ink-700">
+          본문 내용
+        </label>
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => wrapSelection("**")}
+              title="굵게"
+              className="rounded-md px-2.5 py-1 text-sm font-bold text-ink-600 transition hover:bg-ink-100"
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() => wrapSelection("*")}
+              title="기울임"
+              className="rounded-md px-2.5 py-1 text-sm italic text-ink-600 transition hover:bg-ink-100"
+            >
+              I
+            </button>
+            <button
+              type="button"
+              onClick={insertHeading}
+              title="제목"
+              className="rounded-md px-2.5 py-1 text-sm font-semibold text-ink-600 transition hover:bg-ink-100"
+            >
+              H
+            </button>
+            <span className="mx-1 h-4 w-px bg-ink-200" />
+            <button
+              type="button"
+              onClick={() => inlineImageInputRef.current?.click()}
+              disabled={insertingImage}
+              title="이미지 삽입"
+              className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-sm text-ink-600 transition hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {insertingImage ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-300 border-t-ink-600" />
+              ) : (
+                "🖼"
+              )}
+              이미지
+            </button>
+            <input
+              ref={inlineImageInputRef}
+              type="file"
+              accept="image/*"
+              onChange={insertInlineImage}
+              className="hidden"
+            />
+          </div>
+        )}
+      </div>
       <textarea
+        ref={textareaRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         readOnly={readOnly}
         rows={12}
         className="w-full rounded-xl border border-ink-200 p-3.5 font-mono text-sm text-ink-900 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 read-only:bg-ink-50 read-only:text-ink-500"
-        placeholder="이 step의 실습 안내 내용을 입력하세요."
+        placeholder="이 step의 실습 안내 내용을 입력하세요. **굵게**, *기울임*, 이미지 삽입을 지원합니다."
       />
+      <p className="mt-1.5 text-xs text-ink-400">
+        마크다운 문법을 지원합니다 — 이미지 버튼으로 본문 중간에 이미지를 삽입할 수 있습니다.
+      </p>
 
       <div className="mt-6">
         <label className="mb-2 block text-sm font-medium text-ink-700">
@@ -321,9 +444,9 @@ export default function StepEditor({
                 </span>
               </div>
               {text ? (
-                <p className="mb-4 whitespace-pre-wrap leading-relaxed text-ink-700">
-                  {text}
-                </p>
+                <div className="prose mb-4 max-w-none text-ink-700 prose-headings:text-ink-900 prose-headings:font-bold prose-a:text-brand-600 prose-strong:text-ink-900 prose-img:rounded-xl prose-img:border prose-img:border-ink-200">
+                  <ReactMarkdown>{text}</ReactMarkdown>
+                </div>
               ) : (
                 <p className="mb-4 text-sm text-ink-400">(내용 없음)</p>
               )}
