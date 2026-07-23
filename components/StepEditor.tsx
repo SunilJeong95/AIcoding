@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import LockBanner from "@/components/LockBanner";
+import StepViewer from "@/components/StepViewer";
 
 const HEARTBEAT_MS = 30 * 1000;
 
@@ -18,7 +18,6 @@ export default function StepEditor({
   totalSteps,
   initialTopic,
   initialText,
-  initialImage,
   initialRequiresUpload,
 }: {
   stepId: string;
@@ -26,17 +25,14 @@ export default function StepEditor({
   totalSteps: number;
   initialTopic: string;
   initialText: string;
-  initialImage: string | null;
   initialRequiresUpload: boolean;
 }) {
   const router = useRouter();
   const [lock, setLock] = useState<LockState>({ phase: "acquiring" });
   const [topic, setTopic] = useState(initialTopic);
   const [text, setText] = useState(initialText);
-  const [image, setImage] = useState<string | null>(initialImage);
   const [requiresUpload, setRequiresUpload] = useState(initialRequiresUpload);
   const [saving, setSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [insertingImage, setInsertingImage] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -156,34 +152,6 @@ export default function StepEditor({
     }
   }
 
-  async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setStatus(null);
-    setUploadingImage(true);
-    try {
-      const form = new FormData();
-      form.append("image", file);
-      const res = await fetch(`/api/admin/steps/${stepId}/image`, {
-        method: "POST",
-        body: form,
-      });
-      if (res.status === 403) {
-        setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
-        return;
-      }
-      if (!res.ok) {
-        setStatus("이미지 업로드에 실패했습니다.");
-        return;
-      }
-      const data = await res.json();
-      setImage(data.imageContent);
-      setStatus("이미지가 업로드되었습니다.");
-    } finally {
-      setUploadingImage(false);
-    }
-  }
-
   // Wraps the current textarea selection with markdown syntax (bold/italic),
   // or inserts at the cursor if nothing is selected.
   function wrapSelection(mark: string) {
@@ -214,8 +182,7 @@ export default function StepEditor({
     });
   }
 
-  // Uploads an image (without touching Step.imageContent — see the
-  // inline-image route) and inserts markdown image syntax at the cursor.
+  // Uploads an image and inserts markdown image syntax at the cursor.
   async function insertInlineImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -330,46 +297,13 @@ export default function StepEditor({
         value={text}
         onChange={(e) => setText(e.target.value)}
         readOnly={readOnly}
-        rows={12}
+        rows={16}
         className="w-full rounded-xl border border-ink-200 p-3.5 font-mono text-sm text-ink-900 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 read-only:bg-ink-50 read-only:text-ink-500"
         placeholder="이 step의 실습 안내 내용을 입력하세요. **굵게**, *기울임*, 이미지 삽입을 지원합니다."
       />
       <p className="mt-1.5 text-xs text-ink-400">
         마크다운 문법을 지원합니다 — 이미지 버튼으로 본문 중간에 이미지를 삽입할 수 있습니다.
       </p>
-
-      <div className="mt-6">
-        <label className="mb-2 block text-sm font-medium text-ink-700">
-          삽화 이미지
-        </label>
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`/api/uploads/${image}`}
-            alt={`Step ${order} 삽화`}
-            className="mb-3 max-h-64 rounded-xl border border-ink-200"
-          />
-        ) : (
-          <p className="mb-3 text-sm text-ink-400">등록된 이미지가 없습니다.</p>
-        )}
-        {!readOnly && (
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept="image/*"
-              disabled={uploadingImage}
-              onChange={uploadImage}
-              className="block text-sm text-ink-600 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-100 file:px-3.5 file:py-2 file:text-sm file:font-medium file:text-ink-700 hover:file:bg-ink-200 disabled:cursor-not-allowed disabled:opacity-60"
-            />
-            {uploadingImage && (
-              <span className="flex items-center gap-1.5 text-sm text-ink-500">
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-300 border-t-ink-600" />
-                업로드 중…
-              </span>
-            )}
-          </div>
-        )}
-      </div>
 
       <div className="mt-6">
         <label className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
@@ -416,12 +350,12 @@ export default function StepEditor({
           onClick={() => setShowPreview(false)}
         >
           <div
-            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-card"
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-ink-50 shadow-card"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 flex items-center justify-between border-b border-ink-100 bg-white px-5 py-3.5">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-200/70 bg-white px-5 py-3.5">
               <span className="text-sm font-semibold text-ink-500">
-                학생 화면 미리보기
+                학생 화면 미리보기 — 실제 /learn 화면과 동일한 컴포넌트입니다
               </span>
               <button
                 onClick={() => setShowPreview(false)}
@@ -431,44 +365,15 @@ export default function StepEditor({
                 ✕
               </button>
             </div>
-            <div className="p-5">
-              <div className="mb-4 flex items-center gap-2.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">
-                  {order}
-                </span>
-                <h2 className="text-lg font-bold text-ink-900">
-                  {topic || `Step ${order}`}
-                </h2>
-                <span className="text-sm font-normal text-ink-400">
-                  {order}/{totalSteps}
-                </span>
-              </div>
-              {text ? (
-                <div className="prose mb-4 max-w-none text-ink-700 prose-headings:text-ink-900 prose-headings:font-bold prose-a:text-brand-600 prose-strong:text-ink-900 prose-img:rounded-xl prose-img:border prose-img:border-ink-200">
-                  <ReactMarkdown>{text}</ReactMarkdown>
-                </div>
-              ) : (
-                <p className="mb-4 text-sm text-ink-400">(내용 없음)</p>
-              )}
-              {image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`/api/uploads/${image}`}
-                  alt={`Step ${order} 삽화`}
-                  className="mb-4 max-w-full rounded-xl border border-ink-200"
-                />
-              )}
-              <div className="border-t border-ink-100 pt-4">
-                {requiresUpload ? (
-                  <div className="rounded-xl border border-dashed border-ink-300 py-3.5 text-center text-sm text-ink-400">
-                    사진 업로드 버튼이 여기에 표시됩니다
-                  </div>
-                ) : (
-                  <div className="rounded-lg bg-brand-600 py-3 text-center text-sm font-semibold text-white">
-                    다음
-                  </div>
-                )}
-              </div>
+            <div className="p-4 pt-6">
+              <StepViewer
+                step={{ id: stepId, order, topic, textContent: text, requiresUpload }}
+                totalSteps={totalSteps}
+                isCurrent
+                submitted={false}
+                onUploaded={() => {}}
+                onAdvance={async () => {}}
+              />
             </div>
           </div>
         </div>

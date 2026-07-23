@@ -9,15 +9,17 @@ export interface StepData {
   order: number;
   topic: string;
   textContent: string;
-  imageContent: string | null;
   requiresUpload: boolean;
 }
 
 interface StepViewerProps {
   step: StepData;
   totalSteps: number;
+  // True for the live/awaiting step (shows upload+advance controls). False
+  // when browsing an already-completed step read-only.
+  isCurrent: boolean;
   // Whether the current step already has an "uploaded" Submission — gates the
-  // "다음" button for requiresUpload steps. Ignored otherwise.
+  // "다음" button for requiresUpload steps. Ignored when !isCurrent.
   submitted: boolean;
   onUploaded: () => void;
   onAdvance: () => Promise<void>;
@@ -26,6 +28,7 @@ interface StepViewerProps {
 export default function StepViewer({
   step,
   totalSteps,
+  isCurrent,
   submitted,
   onUploaded,
   onAdvance,
@@ -48,7 +51,11 @@ export default function StepViewer({
   const nextEnabled = step.requiresUpload ? submitted : true;
 
   return (
-    <section className="rounded-2xl border border-brand-300 bg-white p-6 shadow-soft ring-1 ring-brand-500/15 transition">
+    <section
+      className={`rounded-2xl border bg-white p-6 shadow-soft transition ${
+        isCurrent ? "border-brand-300 ring-1 ring-brand-500/15" : "border-ink-200/70"
+      }`}
+    >
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="flex min-w-0 items-center gap-2.5 text-lg font-bold text-ink-900">
           <span className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold tabular-nums text-brand-700">
@@ -56,9 +63,15 @@ export default function StepViewer({
           </span>
           <span className="truncate">{step.topic || `Step ${step.order}`}</span>
         </h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
-          진행중
-        </span>
+        {isCurrent ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+            진행중
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+            ✓ 완료
+          </span>
+        )}
       </div>
 
       {step.textContent && (
@@ -67,32 +80,25 @@ export default function StepViewer({
         </div>
       )}
 
-      {step.imageContent && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`/api/uploads/${step.imageContent}`}
-          alt={`Step ${step.order} 참고 이미지`}
-          className="mb-4 max-w-full rounded-xl border border-ink-200"
-        />
-      )}
-
-      <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
-        {step.requiresUpload && (
-          <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
-        )}
-        <button
-          type="button"
-          onClick={handleAdvance}
-          disabled={!nextEnabled || advancing}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {advancing && (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+      {isCurrent && (
+        <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
+          {step.requiresUpload && (
+            <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
           )}
-          다음
-        </button>
-        {error && <p className="text-sm text-rose-600">{error}</p>}
-      </div>
+          <button
+            type="button"
+            onClick={handleAdvance}
+            disabled={!nextEnabled || advancing}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {advancing && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
+            다음
+          </button>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+        </div>
+      )}
     </section>
   );
 }

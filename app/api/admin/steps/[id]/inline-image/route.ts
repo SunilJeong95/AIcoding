@@ -7,10 +7,9 @@ import { saveUpload } from "@/lib/upload";
 export const dynamic = "force-dynamic";
 
 // POST /api/admin/steps/[id]/inline-image — multipart image upload for an
-// image embedded mid-content via markdown (`![](...)`) in textContent. Unlike
-// /image, this does NOT touch Step.imageContent (that field stays a separate
-// single cover image) — it only saves the file and returns its path for the
-// client to insert into the textarea. Must hold the lock.
+// image embedded mid-content via markdown (`![](...)`) in textContent. Only
+// saves the file and returns its path for the client to insert into the
+// textarea — the step's own row is never touched. Must hold the lock.
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

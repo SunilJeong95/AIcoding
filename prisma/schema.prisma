@@ -21,7 +21,6 @@ model Step {
   order          Int // 1-based sequential order; unique within course
   topic          String  @default("") // short title shown instead of "Step N" (admin-set on create)
   textContent    String  @default("")
-  imageContent   String? // relative path to a step illustration image (admin-uploaded), nullable
   requiresUpload Boolean @default(true) // if false, students advance via a Next button, no photo needed
   course         Course  @relation(fields: [courseId], references: [id])
   // onDelete: Cascade so deleting a step cleans up dependent rows (no FK error)

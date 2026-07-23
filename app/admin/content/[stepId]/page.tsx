@@ -26,7 +26,7 @@ export default async function StepEditorPage({
   return (
     <div className="min-h-screen bg-ink-50">
       <AdminNav name={admin.name} />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-6">
           <Link
             href="/admin/content"
@@ -46,7 +46,6 @@ export default async function StepEditorPage({
             totalSteps={totalSteps}
             initialTopic={step.topic}
             initialText={step.textContent}
-            initialImage={step.imageContent}
             initialRequiresUpload={step.requiresUpload}
           />
         </div>
