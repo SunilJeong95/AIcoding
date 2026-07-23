@@ -24,6 +24,8 @@ export default function CodeManager() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,6 +108,57 @@ export default function CodeManager() {
     }
   }
 
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.size === codes.length ? new Set() : new Set(codes.map((c) => c.id)),
+    );
+  }
+
+  async function deleteSelected() {
+    if (selected.size === 0) return;
+    if (
+      !window.confirm(
+        `선택한 ${selected.size}개 코드를 삭제하면 사용 중인 학생은 강제 로그아웃되고 진행 기록도 함께 삭제됩니다. 계속하시겠습니까?`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/codes", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "삭제에 실패했습니다");
+        return;
+      }
+      setNotice(`${selected.size}개 코드를 삭제했습니다.`);
+      setSelected(new Set());
+      await load();
+    } catch {
+      setError("네트워크 오류가 발생했습니다");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const atCap = total >= MAX_CODES;
 
   return (
@@ -144,6 +197,16 @@ export default function CodeManager() {
             )}
             {busy ? "생성 중…" : "코드 생성"}
           </button>
+          <button
+            onClick={deleteSelected}
+            disabled={selected.size === 0 || deleting}
+            className="flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {deleting && (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-300 border-t-rose-600" />
+            )}
+            {deleting ? "삭제 중…" : `선택 삭제${selected.size > 0 ? ` (${selected.size})` : ""}`}
+          </button>
         </div>
       </div>
 
@@ -168,6 +231,15 @@ export default function CodeManager() {
           <table className="min-w-full divide-y divide-ink-100 text-sm">
             <thead className="bg-ink-50 text-left text-xs font-semibold uppercase tracking-wide text-ink-500">
               <tr>
+                <th className="w-10 px-5 py-3">
+                  <input
+                    type="checkbox"
+                    checked={codes.length > 0 && selected.size === codes.length}
+                    onChange={toggleAll}
+                    aria-label="전체 선택"
+                    className="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-4 focus:ring-brand-500/10"
+                  />
+                </th>
                 <th className="px-5 py-3">코드</th>
                 <th className="px-5 py-3">상태</th>
                 <th className="px-5 py-3">이름</th>
@@ -179,7 +251,7 @@ export default function CodeManager() {
             <tbody className="divide-y divide-ink-100">
               {codes.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-14 text-center text-sm text-ink-400">
+                  <td colSpan={7} className="px-5 py-14 text-center text-sm text-ink-400">
                     생성된 코드가 없습니다.
                   </td>
                 </tr>
@@ -187,7 +259,21 @@ export default function CodeManager() {
                 codes.map((c) => {
                   const inUse = c.status === "in-use";
                   return (
-                    <tr key={c.id} className="transition hover:bg-ink-50/60">
+                    <tr
+                      key={c.id}
+                      className={`transition hover:bg-ink-50/60 ${
+                        selected.has(c.id) ? "bg-brand-50/40" : ""
+                      }`}
+                    >
+                      <td className="px-5 py-3.5">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(c.id)}
+                          onChange={() => toggleOne(c.id)}
+                          aria-label={`${c.code} 선택`}
+                          className="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-4 focus:ring-brand-500/10"
+                        />
+                      </td>
                       <td className="px-5 py-3.5 font-mono font-medium tracking-wide text-ink-900">
                         {c.code}
                       </td>
