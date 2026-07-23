@@ -17,12 +17,14 @@ jobs:
 
       - run: npm ci
 
+      # opennextjs-cloudflare build runs `next build` internally, which
+      # imports every route module (even fully-dynamic ones) to collect page
+      # data — that trips lib/session.ts's top-level SESSION_SECRET check, so
+      # the dummy value has to reach this exact step, not just `npm run build`.
       - name: Build (dummy session secret — build-time only, never serves traffic)
-        run: npm run build
+        run: npx opennextjs-cloudflare build
         env:
           SESSION_SECRET: ci-build-only-secret-not-used-at-runtime-000000
-
-      - run: npx opennextjs-cloudflare build
 
       - run: npx wrangler deploy
         env:
