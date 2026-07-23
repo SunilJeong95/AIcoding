@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import PhotoUpload from "./PhotoUpload";
 
 export interface StepData {
@@ -15,10 +16,7 @@ export interface StepData {
 interface StepViewerProps {
   step: StepData;
   totalSteps: number;
-  // True only for the single step currently awaiting completion. When false,
-  // the step is already completed and shown read-only.
-  awaitingUpload: boolean;
-  // Whether the awaiting step already has an "uploaded" Submission — gates the
+  // Whether the current step already has an "uploaded" Submission — gates the
   // "다음" button for requiresUpload steps. Ignored otherwise.
   submitted: boolean;
   onUploaded: () => void;
@@ -28,7 +26,6 @@ interface StepViewerProps {
 export default function StepViewer({
   step,
   totalSteps,
-  awaitingUpload,
   submitted,
   onUploaded,
   onAdvance,
@@ -51,11 +48,7 @@ export default function StepViewer({
   const nextEnabled = step.requiresUpload ? submitted : true;
 
   return (
-    <section
-      className={`rounded-2xl border bg-white p-6 shadow-soft transition ${
-        awaitingUpload ? "border-brand-300 ring-1 ring-brand-500/15" : "border-ink-200/70"
-      }`}
-    >
+    <section className="rounded-2xl border border-brand-300 bg-white p-6 shadow-soft ring-1 ring-brand-500/15 transition">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="flex min-w-0 items-center gap-2.5 text-lg font-bold text-ink-900">
           <span className="shrink-0 rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold tabular-nums text-brand-700">
@@ -63,21 +56,15 @@ export default function StepViewer({
           </span>
           <span className="truncate">{step.topic || `Step ${step.order}`}</span>
         </h2>
-        {!awaitingUpload ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-            ✓ 완료
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
-            진행중
-          </span>
-        )}
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+          진행중
+        </span>
       </div>
 
       {step.textContent && (
-        <p className="mb-4 whitespace-pre-wrap leading-relaxed text-ink-700">
-          {step.textContent}
-        </p>
+        <div className="prose mb-4 max-w-none text-ink-700 prose-headings:text-ink-900 prose-headings:font-bold prose-a:text-brand-600 prose-strong:text-ink-900 prose-img:rounded-xl prose-img:border prose-img:border-ink-200">
+          <ReactMarkdown>{step.textContent}</ReactMarkdown>
+        </div>
       )}
 
       {step.imageContent && (
@@ -89,25 +76,23 @@ export default function StepViewer({
         />
       )}
 
-      {awaitingUpload && (
-        <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
-          {step.requiresUpload && (
-            <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
+      <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
+        {step.requiresUpload && (
+          <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
+        )}
+        <button
+          type="button"
+          onClick={handleAdvance}
+          disabled={!nextEnabled || advancing}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {advancing && (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
           )}
-          <button
-            type="button"
-            onClick={handleAdvance}
-            disabled={!nextEnabled || advancing}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {advancing && (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-            )}
-            다음
-          </button>
-          {error && <p className="text-sm text-rose-600">{error}</p>}
-        </div>
-      )}
+          다음
+        </button>
+        {error && <p className="text-sm text-rose-600">{error}</p>}
+      </div>
     </section>
   );
 }

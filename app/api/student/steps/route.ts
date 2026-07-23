@@ -3,8 +3,9 @@ import { getDb } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
 
 // GET /api/student/steps — server-enforced sequential lock.
-// Only steps with order <= student.currentStepOrder are returned, and locked
-// later steps are NOT exposed at all (no text/image of future steps leaks).
+// Only the single step at student.currentStepOrder is returned — earlier and
+// later steps are NOT exposed at all (no text/image of any other step leaks,
+// and the client renders one step at a time instead of an ever-growing list).
 export async function GET() {
   const prisma = getDb();
   const auth = await getStudentSession();
@@ -14,12 +15,11 @@ export async function GET() {
 
   const { currentStepOrder } = auth.student;
 
-  // Gate at the query level — future steps never leave the server.
-  const [totalSteps, steps] = await Promise.all([
+  // Gate at the query level — every other step never leaves the server.
+  const [totalSteps, step] = await Promise.all([
     prisma.step.count({ where: { courseId: 1 } }),
-    prisma.step.findMany({
-      where: { courseId: 1, order: { lte: currentStepOrder } },
-      orderBy: { order: "asc" },
+    prisma.step.findFirst({
+      where: { courseId: 1, order: currentStepOrder },
       select: {
         id: true,
         order: true,
@@ -31,18 +31,17 @@ export async function GET() {
     }),
   ]);
 
-  // Whether the step at currentStepOrder has an "uploaded" Submission yet —
-  // for requiresUpload steps this gates the "다음" button; for the last step
+  // Whether the current step has an "uploaded" Submission yet — for
+  // requiresUpload steps this gates the "다음" button; for the last step
   // it's also how the client knows the course is fully complete (see
   // /api/student/advance, which upserts a Submission even for no-upload steps).
-  const currentStep = steps.find((s) => s.order === currentStepOrder);
   let currentStepSubmitted = false;
-  if (currentStep) {
+  if (step) {
     const submission = await prisma.submission.findUnique({
       where: {
         studentId_stepId: {
           studentId: auth.student.id,
-          stepId: currentStep.id,
+          stepId: step.id,
         },
       },
       select: { status: true },
@@ -54,6 +53,6 @@ export async function GET() {
     currentStepOrder,
     totalSteps,
     currentStepSubmitted,
-    steps,
+    step,
   });
 }

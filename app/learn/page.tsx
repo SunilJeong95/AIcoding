@@ -8,7 +8,18 @@ interface StepsResponse {
   currentStepOrder: number;
   totalSteps: number;
   currentStepSubmitted: boolean;
-  steps: StepData[];
+  step: StepData | null;
+}
+
+// Resolves once the image is decoded (or fails), so the spinner covers the
+// image fetch too instead of the next screen popping content in piecemeal.
+function preloadImage(src: string): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    img.src = src;
+  });
 }
 
 export default function LearnPage() {
@@ -34,8 +45,12 @@ export default function LearnPage() {
         return;
       }
       const me = await meRes.json();
+      const stepsJson: StepsResponse = await stepsRes.json();
+      if (stepsJson.step?.imageContent) {
+        await preloadImage(`/api/uploads/${stepsJson.step.imageContent}`);
+      }
       setStudentName(me.name ?? "");
-      setData(await stepsRes.json());
+      setData(stepsJson);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
@@ -54,17 +69,24 @@ export default function LearnPage() {
 
   async function onAdvance() {
     const res = await fetch("/api/student/advance", { method: "POST" });
-    const data = await res.json();
+    const json = await res.json();
     if (!res.ok) {
-      throw new Error(data.error ?? "다음 단계로 넘어가지 못했습니다.");
+      throw new Error(json.error ?? "다음 단계로 넘어가지 못했습니다.");
     }
+    // Swap straight to a full loading screen and only reveal the next step
+    // once it (and its image) has fully loaded — no growing list, no
+    // partial reveal.
+    setLoading(true);
     await load();
   }
 
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-ink-50 text-sm text-ink-500">
-        불러오는 중...
+        <span className="flex items-center gap-2">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600" />
+          불러오는 중...
+        </span>
       </main>
     );
   }
@@ -85,21 +107,18 @@ export default function LearnPage() {
 
   if (!data) return null;
 
-  const { currentStepOrder, totalSteps, currentStepSubmitted, steps } = data;
+  const { currentStepOrder, totalSteps, currentStepSubmitted, step } = data;
   // The course is fully done once the (capped) last step has been advanced
   // past via /api/student/advance — until then, currentStepOrder is always
   // the step awaiting attention (upload-then-next, or just next).
   const allDone =
-    totalSteps > 0 &&
-    currentStepOrder >= totalSteps &&
-    currentStepSubmitted;
-  const awaitingOrder = allDone ? null : currentStepOrder;
+    totalSteps > 0 && currentStepOrder >= totalSteps && currentStepSubmitted;
   const progressPct =
     totalSteps > 0 ? Math.min(100, Math.round((currentStepOrder / totalSteps) * 100)) : 0;
 
   return (
     <main className="min-h-screen bg-ink-50 pb-16">
-      <div className="mx-auto max-w-2xl space-y-6 p-4 pt-6">
+      <div className="mx-auto max-w-3xl space-y-6 p-4 pt-6">
         <header className="rounded-2xl border border-ink-200/70 bg-white p-5 shadow-soft">
           <div className="flex items-center justify-between">
             <div>
@@ -126,19 +145,16 @@ export default function LearnPage() {
           </div>
         </header>
 
-        <div className="space-y-4">
-          {steps.map((step) => (
-            <StepViewer
-              key={step.id}
-              step={step}
-              totalSteps={totalSteps}
-              awaitingUpload={step.order === awaitingOrder}
-              submitted={step.order === awaitingOrder && currentStepSubmitted}
-              onUploaded={load}
-              onAdvance={onAdvance}
-            />
-          ))}
-        </div>
+        {!allDone && step && (
+          <StepViewer
+            key={step.id}
+            step={step}
+            totalSteps={totalSteps}
+            submitted={currentStepSubmitted}
+            onUploaded={load}
+            onAdvance={onAdvance}
+          />
+        )}
 
         {allDone && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
