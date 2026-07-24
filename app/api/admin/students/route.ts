@@ -34,6 +34,7 @@ export async function GET() {
         currentStepTopic: topicByOrder.get(cappedOrder) || null,
         totalSteps,
         progress: `${cappedOrder}/${totalSteps}`,
+        completed: s.completedAt !== null,
       };
     }),
   });

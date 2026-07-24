@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepViewer, { type StepData } from "@/components/StepViewer";
 
@@ -19,6 +19,12 @@ export default function LearnPage() {
   const [studentName, setStudentName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Whether the congrats screen is currently shown — separate from
+  // `data.completed` (a permanent server flag) so the browser back button can
+  // dismiss it in favor of the last step's content without touching server
+  // state. See the popstate handling below.
+  const [showCongrats, setShowCongrats] = useState(false);
+  const pushedCongratsRef = useRef(false);
 
   const load = useCallback(
     async (order?: number) => {
@@ -52,6 +58,30 @@ export default function LearnPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Show the congrats screen once the student lands on it, but let the
+  // browser back button dismiss it in favor of the last step's content
+  // instead of leaving the page. Re-showing it (e.g. after clicking "다음"
+  // again from the forced-back step view) pushes a fresh history entry so
+  // back keeps working the same way.
+  useEffect(() => {
+    if (!data || !data.step) return;
+    const isCurrentNow = data.step.order === data.currentStepOrder;
+    if (isCurrentNow && data.completed && !pushedCongratsRef.current) {
+      window.history.pushState({ omcCongrats: true }, "");
+      pushedCongratsRef.current = true;
+      setShowCongrats(true);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    function onPopState() {
+      pushedCongratsRef.current = false;
+      setShowCongrats(false);
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   // Full-screen spinner while switching to a different step — advancing,
   // or browsing to a previous/next already-unlocked step.
@@ -160,7 +190,7 @@ export default function LearnPage() {
           </button>
         </div>
 
-        {isCurrent && completed ? (
+        {isCurrent && completed && showCongrats ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center">
             <p className="text-4xl">🎉</p>
             <p className="mt-3 text-lg font-bold text-emerald-800">

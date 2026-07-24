@@ -11,6 +11,7 @@ interface RosterRow {
   currentStepTopic: string | null;
   totalSteps: number;
   progress: string;
+  completed: boolean;
 }
 
 export default function RosterTable() {
@@ -99,7 +100,11 @@ export default function RosterTable() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 tabular-nums text-ink-700">
-                      {r.progress}
+                      {r.completed ? (
+                        <span className="font-semibold text-emerald-700">수강완료</span>
+                      ) : (
+                        r.progress
+                      )}
                     </td>
                     <td className="px-5 py-3.5 text-ink-700">
                       {r.currentStepTopic ?? "—"}
