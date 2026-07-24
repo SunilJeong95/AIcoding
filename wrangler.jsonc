@@ -13,5 +13,11 @@
       "binding": "WORKER_SELF_REFERENCE",
       "service": "aicoding"
     }
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "b896b012eefa46318f6d74ef79a8b095"
+    }
   ]
 }
