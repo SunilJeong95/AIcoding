@@ -8,7 +8,7 @@ import { studentLoginSchema } from "@/lib/validation";
 // SPEC: open item resolved as "free-input on first use, then locked to that code"
 // (plan §1 / §8). First successful login binds assignedStudentName/assignedEmployeeId/
 // aiTool onto the EntryCode and flips status unused → in-use. Subsequent logins with
-// the same code must match the stored name+employeeId (prevents hijacking an in-use code).
+// the same code must match the stored name+employeeId+aiTool (prevents hijacking an in-use code).
 export async function POST(req: NextRequest) {
   const prisma = getDb();
   let body: unknown;
@@ -65,10 +65,11 @@ export async function POST(req: NextRequest) {
     // in-use — must match the bound identity, else this is a hijack attempt.
     if (
       entryCode.assignedStudentName !== name ||
-      entryCode.assignedEmployeeId !== employeeId
+      entryCode.assignedEmployeeId !== employeeId ||
+      entryCode.aiTool !== aiTool
     ) {
       return NextResponse.json(
-        { error: "이미 사용 중인 코드입니다. 이름과 사번이 일치하지 않습니다." },
+        { error: "이미 사용 중인 코드입니다. 이름, 사번, AI 도구가 일치하지 않습니다." },
         { status: 403 },
       );
     }

@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const AI_TOOLS = ["Cursor", "GitHub Copilot", "Claude", "Codex"] as const;
+import { AI_TOOLS } from "@/lib/validation";
 
 export default function StudentLoginPage() {
   const router = useRouter();

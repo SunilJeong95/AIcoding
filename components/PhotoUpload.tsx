@@ -5,11 +5,14 @@ import { useRef, useState } from "react";
 interface PhotoUploadProps {
   stepId: string;
   onUploaded: () => void;
+  // True in the admin preview modal — renders the control but blocks the
+  // file picker so preview can't create a real Submission.
+  disabled?: boolean;
 }
 
 // Uploads a photo for the current step. Shows "업로드 중입니다" while in flight;
 // the parent auto-advances the view on success (onUploaded).
-export default function PhotoUpload({ stepId, onUploaded }: PhotoUploadProps) {
+export default function PhotoUpload({ stepId, onUploaded, disabled = false }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +57,7 @@ export default function PhotoUpload({ stepId, onUploaded }: PhotoUploadProps) {
       />
       <button
         type="button"
-        disabled={uploading}
+        disabled={disabled || uploading}
         onClick={() => inputRef.current?.click()}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >

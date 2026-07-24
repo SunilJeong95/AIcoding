@@ -1,8 +1,15 @@
 import { z } from "zod";
 
-// The four supported AI tools (spec). Kept here so both student login and code
+// The supported AI tools. Kept here so both student login and code
 // generation validate against the same source of truth.
-export const AI_TOOLS = ["Cursor", "GitHub Copilot", "Claude", "Codex"] as const;
+export const AI_TOOLS = [
+  "Cursor",
+  "Cursor 무료",
+  "GitHub Copilot",
+  "GitHub Copilot 무료",
+  "Claude",
+  "Codex",
+] as const;
 export const aiToolSchema = z.enum(AI_TOOLS);
 
 // POST /api/student/login

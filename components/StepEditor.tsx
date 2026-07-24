@@ -373,6 +373,7 @@ export default function StepEditor({
                 submitted={false}
                 onUploaded={() => {}}
                 onAdvance={async () => {}}
+                previewOnly
               />
             </div>
           </div>

@@ -23,6 +23,10 @@ interface StepViewerProps {
   submitted: boolean;
   onUploaded: () => void;
   onAdvance: () => Promise<void>;
+  // True in the admin preview modal — shows the upload/next controls (so the
+  // preview matches the real student layout) but disables them, since a real
+  // click here has no student session to act on.
+  previewOnly?: boolean;
 }
 
 export default function StepViewer({
@@ -32,6 +36,7 @@ export default function StepViewer({
   submitted,
   onUploaded,
   onAdvance,
+  previewOnly = false,
 }: StepViewerProps) {
   const [advancing, setAdvancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,12 +88,12 @@ export default function StepViewer({
       {isCurrent && (
         <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
           {step.requiresUpload && (
-            <PhotoUpload stepId={step.id} onUploaded={onUploaded} />
+            <PhotoUpload stepId={step.id} onUploaded={onUploaded} disabled={previewOnly} />
           )}
           <button
             type="button"
             onClick={handleAdvance}
-            disabled={!nextEnabled || advancing}
+            disabled={previewOnly || !nextEnabled || advancing}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {advancing && (
