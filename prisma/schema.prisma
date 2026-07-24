@@ -50,6 +50,7 @@ model Student {
   entryCodeId      String    @unique
   entryCode        EntryCode @relation(fields: [entryCodeId], references: [id])
   currentStepOrder Int       @default(1) // highest unlocked step (progress). "3/6" = this value.
+  completedAt      DateTime? // set by /api/student/advance when the student advances past the LAST step
   createdAt        DateTime  @default(now())
   submissions      Submission[]
 }
@@ -58,7 +59,7 @@ model Submission {
   id         String   @id @default(cuid())
   studentId  String
   stepId     String
-  photoPath  String? // relative path under uploads/, null for no-upload-required steps
+  photoPaths String[] @default([]) // relative paths under uploads/, empty for no-upload-required steps
   status     String   @default("uploading") // "uploading" | "uploaded"
   uploadedAt DateTime @default(now())
   student    Student  @relation(fields: [studentId], references: [id])

@@ -5,24 +5,35 @@ import { useRef, useState } from "react";
 interface PhotoUploadProps {
   stepId: string;
   onUploaded: () => void;
+  // Whether this step already has at least one uploaded photo — swaps the
+  // button label from "업로드" to "추가" since selecting more files appends
+  // rather than replaces.
+  hasExisting?: boolean;
   // True in the admin preview modal — renders the control but blocks the
   // file picker so preview can't create a real Submission.
   disabled?: boolean;
 }
 
-// Uploads a photo for the current step. Shows "업로드 중입니다" while in flight;
-// the parent auto-advances the view on success (onUploaded).
-export default function PhotoUpload({ stepId, onUploaded, disabled = false }: PhotoUploadProps) {
+// Uploads one or more photos for the current step (each call appends to the
+// step's photo set — see /api/student/submit). Shows "업로드 중입니다" while in
+// flight; the parent refetches on success (onUploaded) so the new thumbnails
+// appear.
+export default function PhotoUpload({
+  stepId,
+  onUploaded,
+  hasExisting = false,
+  disabled = false,
+}: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
+  async function handleFiles(files: FileList) {
     setError(null);
     setUploading(true);
     try {
       const form = new FormData();
-      form.append("photo", file);
+      for (const file of files) form.append("photos", file);
       form.append("stepId", stepId);
       const res = await fetch("/api/student/submit", {
         method: "POST",
@@ -48,11 +59,11 @@ export default function PhotoUpload({ stepId, onUploaded, disabled = false }: Ph
         ref={inputRef}
         type="file"
         accept="image/*"
+        multiple
         disabled={uploading}
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFile(file);
+          if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
         }}
       />
       <button
@@ -69,7 +80,7 @@ export default function PhotoUpload({ stepId, onUploaded, disabled = false }: Ph
         ) : (
           <>
             <span aria-hidden>📷</span>
-            실습 사진 업로드
+            {hasExisting ? "사진 추가 업로드" : "실습 사진 업로드"}
           </>
         )}
       </button>

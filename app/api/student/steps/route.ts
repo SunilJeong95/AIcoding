@@ -39,13 +39,12 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  // Whether the *current* step has an "uploaded" Submission yet — only
-  // meaningful when the returned step is the current one; for requiresUpload
-  // steps this gates the "다음" button, and for the last step it's also how
-  // the client knows the course is fully complete (see /api/student/advance,
-  // which upserts a Submission even for no-upload steps).
-  let currentStepSubmitted = false;
-  if (step && step.order === currentStepOrder) {
+  // The RETURNED step's own submission — when it's the current step, this
+  // gates the "다음" button (requiresUpload). When browsing an already-
+  // completed step read-only, this is just its uploaded photos.
+  let submitted = false;
+  let photoPaths: string[] = [];
+  if (step) {
     const submission = await prisma.submission.findUnique({
       where: {
         studentId_stepId: {
@@ -53,15 +52,21 @@ export async function GET(req: NextRequest) {
           stepId: step.id,
         },
       },
-      select: { status: true },
+      select: { status: true, photoPaths: true },
     });
-    currentStepSubmitted = submission?.status === "uploaded";
+    submitted = submission?.status === "uploaded";
+    photoPaths = submission?.photoPaths ?? [];
   }
 
   return NextResponse.json({
     currentStepOrder,
     totalSteps,
-    currentStepSubmitted,
+    submitted,
+    photoPaths,
+    // Explicit "advanced past the real last step" signal — see
+    // /api/student/advance. Distinct from `submitted`, which is only about
+    // the returned step's own submission.
+    completed: auth.student.completedAt !== null,
     step,
   });
 }

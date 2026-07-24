@@ -7,7 +7,9 @@ import StepViewer, { type StepData } from "@/components/StepViewer";
 interface StepsResponse {
   currentStepOrder: number;
   totalSteps: number;
-  currentStepSubmitted: boolean;
+  submitted: boolean;
+  photoPaths: string[];
+  completed: boolean;
   step: StepData | null;
 }
 
@@ -99,13 +101,8 @@ export default function LearnPage() {
 
   if (!data || !data.step) return null;
 
-  const { currentStepOrder, totalSteps, currentStepSubmitted, step } = data;
+  const { currentStepOrder, totalSteps, submitted, photoPaths, completed, step } = data;
   const isCurrent = step.order === currentStepOrder;
-  // The course is fully done once the (capped) last step has been advanced
-  // past via /api/student/advance — until then, currentStepOrder is always
-  // the step awaiting attention (upload-then-next, or just next).
-  const allDone =
-    totalSteps > 0 && currentStepOrder >= totalSteps && currentStepSubmitted;
   const progressPct =
     totalSteps > 0 ? Math.min(100, Math.round((currentStepOrder / totalSteps) * 100)) : 0;
 
@@ -163,11 +160,14 @@ export default function LearnPage() {
           </button>
         </div>
 
-        {isCurrent && allDone ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-            <p className="text-2xl">🎉</p>
-            <p className="mt-2 font-semibold text-emerald-800">
-              모든 단계를 완료했습니다. 수고하셨습니다!
+        {isCurrent && completed ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center">
+            <p className="text-4xl">🎉</p>
+            <p className="mt-3 text-lg font-bold text-emerald-800">
+              수강 완료를 축하합니다!
+            </p>
+            <p className="mt-1 text-sm text-emerald-700">
+              총 {totalSteps}개 단계를 모두 마쳤습니다. 수고하셨습니다.
             </p>
           </div>
         ) : (
@@ -176,7 +176,8 @@ export default function LearnPage() {
             step={step}
             totalSteps={totalSteps}
             isCurrent={isCurrent}
-            submitted={currentStepSubmitted}
+            submitted={submitted}
+            photoPaths={photoPaths}
             onUploaded={() => load()}
             onAdvance={onAdvance}
           />

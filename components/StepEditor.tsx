@@ -371,6 +371,7 @@ export default function StepEditor({
                 totalSteps={totalSteps}
                 isCurrent
                 submitted={false}
+                photoPaths={[]}
                 onUploaded={() => {}}
                 onAdvance={async () => {}}
                 previewOnly

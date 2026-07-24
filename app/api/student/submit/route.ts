@@ -27,10 +27,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  const file = form.get("photo");
-  if (!(file instanceof File) || file.size === 0) {
+  const files = form
+    .getAll("photos")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length === 0) {
     return NextResponse.json(
       { error: "사진 파일이 필요합니다." },
+      { status: 400 },
+    );
+  }
+  if (files.length > 10) {
+    return NextResponse.json(
+      { error: "한 번에 최대 10장까지 업로드할 수 있습니다." },
       { status: 400 },
     );
   }
@@ -63,28 +71,35 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let photoPath: string;
+  let photoPaths: string[];
   try {
-    photoPath = await saveUpload(file, { subdir: "submissions" });
+    photoPaths = await Promise.all(
+      files.map((file) => saveUpload(file, { subdir: "submissions" })),
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : "업로드에 실패했습니다.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  // Record the submission (one per step per student). Advancing to the next
-  // step happens separately via /api/student/advance.
-  await prisma.submission.upsert({
+  // Record the submission (one per step per student) — each call APPENDS to
+  // the step's photo set, so students can upload multiple photos across
+  // several selections instead of the latest one replacing the rest.
+  const submission = await prisma.submission.upsert({
     where: {
       studentId_stepId: { studentId: student.id, stepId: targetStep.id },
     },
     create: {
       studentId: student.id,
       stepId: targetStep.id,
-      photoPath,
+      photoPaths,
       status: "uploaded",
     },
-    update: { photoPath, status: "uploaded", uploadedAt: new Date() },
+    update: {
+      photoPaths: { push: photoPaths },
+      status: "uploaded",
+      uploadedAt: new Date(),
+    },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, photoPaths: submission.photoPaths });
 }

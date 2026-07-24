@@ -21,6 +21,10 @@ interface StepViewerProps {
   // Whether the current step already has an "uploaded" Submission — gates the
   // "다음" button for requiresUpload steps. Ignored when !isCurrent.
   submitted: boolean;
+  // Photos already uploaded for this step (current or a completed one being
+  // browsed read-only) — shown as a thumbnail gallery so students can
+  // confirm what actually made it up.
+  photoPaths: string[];
   onUploaded: () => void;
   onAdvance: () => Promise<void>;
   // True in the admin preview modal — shows the upload/next controls (so the
@@ -34,6 +38,7 @@ export default function StepViewer({
   totalSteps,
   isCurrent,
   submitted,
+  photoPaths,
   onUploaded,
   onAdvance,
   previewOnly = false,
@@ -85,10 +90,40 @@ export default function StepViewer({
         </div>
       )}
 
+      {step.requiresUpload && photoPaths.length > 0 && (
+        <div className="mb-4">
+          <p className="mb-2 text-xs font-medium text-ink-500">
+            업로드한 사진 ({photoPaths.length}장)
+          </p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {photoPaths.map((p) => (
+              <a
+                key={p}
+                href={`/api/uploads/${p}`}
+                target="_blank"
+                rel="noreferrer"
+                className="block aspect-square overflow-hidden rounded-lg border border-ink-200 bg-ink-50"
+              >
+                <img
+                  src={`/api/uploads/${p}`}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isCurrent && (
         <div className="mt-4 space-y-3 border-t border-ink-100 pt-4">
           {step.requiresUpload && (
-            <PhotoUpload stepId={step.id} onUploaded={onUploaded} disabled={previewOnly} />
+            <PhotoUpload
+              stepId={step.id}
+              onUploaded={onUploaded}
+              hasExisting={photoPaths.length > 0}
+              disabled={previewOnly}
+            />
           )}
           <button
             type="button"

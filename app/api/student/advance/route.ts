@@ -9,9 +9,14 @@ import { getStudentSession } from "@/lib/auth";
 // Steps that require a photo (requiresUpload) can only be advanced once a
 // prior /api/student/submit call recorded an "uploaded" Submission for this
 // student+step. Steps that don't require a photo advance immediately, but
-// still get an "uploaded" Submission row (photoPath: null) so downstream
-// progress checks (currentStepSubmitted, the "all done" state on the last
-// step) work the same way regardless of whether the step had a photo.
+// still get an "uploaded" Submission row (empty photoPaths) so downstream
+// progress checks (currentStepSubmitted) work the same way regardless of
+// whether the step had a photo.
+//
+// currentStepOrder is capped at totalSteps, so it can't by itself tell
+// "on the last step, submitted, not yet advanced" apart from "actually
+// finished" — completedAt is the explicit signal for the latter, set only
+// when this endpoint is called FROM the real last step.
 export async function POST() {
   const prisma = getDb();
   const auth = await getStudentSession();
@@ -32,6 +37,7 @@ export async function POST() {
 
   const totalSteps = await prisma.step.count({ where: { courseId: 1 } });
   const nextOrder = Math.min(student.currentStepOrder + 1, totalSteps);
+  const isLastStep = targetStep.order === totalSteps;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -52,16 +58,22 @@ export async function POST() {
           create: {
             studentId: student.id,
             stepId: targetStep.id,
-            photoPath: null,
             status: "uploaded",
           },
           update: { status: "uploaded", uploadedAt: new Date() },
         });
       }
+      const studentUpdate: { currentStepOrder?: number; completedAt?: Date } = {};
       if (nextOrder !== student.currentStepOrder) {
+        studentUpdate.currentStepOrder = nextOrder;
+      }
+      if (isLastStep) {
+        studentUpdate.completedAt = new Date();
+      }
+      if (Object.keys(studentUpdate).length > 0) {
         await tx.student.update({
           where: { id: student.id },
-          data: { currentStepOrder: nextOrder },
+          data: studentUpdate,
         });
       }
     });
@@ -79,6 +91,6 @@ export async function POST() {
     ok: true,
     currentStepOrder: nextOrder,
     totalSteps,
-    completed: nextOrder === totalSteps,
+    completed: isLastStep,
   });
 }
