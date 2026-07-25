@@ -385,7 +385,7 @@ export default function StepEditor({
           onClick={() => setShowPreview(false)}
         >
           <div
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-ink-50 shadow-card"
+            className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-ink-50 shadow-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-200/70 bg-white px-5 py-3.5">
