@@ -141,6 +141,7 @@ function LearnPageInner() {
 
   const { currentStepOrder, totalSteps, submitted, photoPaths, completed, step } = data;
   const isCurrent = step.order === currentStepOrder;
+  const showCongrats = isCurrent && completed && searchParams.get("done") === "1";
   const progressPct =
     totalSteps > 0 ? Math.min(100, Math.round((currentStepOrder / totalSteps) * 100)) : 0;
 
@@ -175,8 +176,8 @@ function LearnPageInner() {
 
         <div className="flex items-center justify-between text-sm">
           <button
-            onClick={() => goTo(step.order - 1)}
-            disabled={step.order <= 1}
+            onClick={() => (showCongrats ? router.back() : goTo(step.order - 1))}
+            disabled={!showCongrats && step.order <= 1}
             className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium text-ink-600 transition hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-0"
           >
             ← 이전
@@ -198,7 +199,7 @@ function LearnPageInner() {
           </button>
         </div>
 
-        {isCurrent && completed && searchParams.get("done") === "1" ? (
+        {showCongrats ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center">
             <p className="text-4xl">🎉</p>
             <p className="mt-3 text-lg font-bold text-emerald-800">
