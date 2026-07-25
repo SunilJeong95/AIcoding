@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       courseId: 1,
       order: nextOrder,
       topic: parsed.data.topic,
-      textContent: parsed.data.textContent,
+      textContentByTool: parsed.data.textContentByTool,
     },
   });
   return NextResponse.json({ step }, { status: 201 });

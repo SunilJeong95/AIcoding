@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { normalizeTextContentByTool } from "@/lib/validation";
 import AdminNav from "@/components/AdminNav";
 import StepEditor from "@/components/StepEditor";
 
@@ -45,7 +46,7 @@ export default async function StepEditorPage({
             order={step.order}
             totalSteps={totalSteps}
             initialTopic={step.topic}
-            initialText={step.textContent}
+            initialTextByTool={normalizeTextContentByTool(step.textContentByTool)}
             initialRequiresUpload={step.requiresUpload}
           />
         </div>

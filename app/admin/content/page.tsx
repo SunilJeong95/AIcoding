@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { normalizeTextContentByTool } from "@/lib/validation";
 import AdminNav from "@/components/AdminNav";
 import DeleteStepButton from "@/components/DeleteStepButton";
 import AddStepButton from "@/components/AddStepButton";
@@ -43,7 +44,10 @@ export default async function AdminContentPage() {
         ) : (
           <ul className="space-y-3">
             {steps.map((step) => {
-              const preview = step.textContent.trim().slice(0, 60);
+              const byTool = normalizeTextContentByTool(step.textContentByTool);
+              const preview = (byTool.Cursor || byTool["GitHub Copilot"] || byTool.Claude)
+                .trim()
+                .slice(0, 60);
               return (
                 <li
                   key={step.id}

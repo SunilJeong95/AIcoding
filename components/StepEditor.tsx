@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import LockBanner from "@/components/LockBanner";
 import StepViewer from "@/components/StepViewer";
+import { CONTENT_TOOL_KEYS, type ContentToolKey } from "@/lib/validation";
 
 const HEARTBEAT_MS = 30 * 1000;
 
@@ -17,21 +18,29 @@ export default function StepEditor({
   order,
   totalSteps,
   initialTopic,
-  initialText,
+  initialTextByTool,
   initialRequiresUpload,
 }: {
   stepId: string;
   order: number;
   totalSteps: number;
   initialTopic: string;
-  initialText: string;
+  initialTextByTool: Record<ContentToolKey, string>;
   initialRequiresUpload: boolean;
 }) {
   const router = useRouter();
   const [lock, setLock] = useState<LockState>({ phase: "acquiring" });
   const [topic, setTopic] = useState(initialTopic);
-  const [text, setText] = useState(initialText);
+  const [textByTool, setTextByTool] = useState(initialTextByTool);
+  const [activeTool, setActiveTool] = useState<ContentToolKey>(CONTENT_TOOL_KEYS[0]);
   const [requiresUpload, setRequiresUpload] = useState(initialRequiresUpload);
+  // The textarea always edits whichever tool tab is active — every existing
+  // toolbar action (bold/italic/heading/image insert) reads/writes through
+  // these two instead of a single flat string.
+  const text = textByTool[activeTool];
+  function setText(next: string) {
+    setTextByTool((prev) => ({ ...prev, [activeTool]: next }));
+  }
   const [saving, setSaving] = useState(false);
   const [insertingImage, setInsertingImage] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -127,7 +136,7 @@ export default function StepEditor({
       const res = await fetch(`/api/admin/steps/${stepId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, textContent: text, requiresUpload }),
+        body: JSON.stringify({ topic, textContentByTool: textByTool, requiresUpload }),
       });
       if (res.status === 403) {
         setStatus("편집 권한이 만료되었습니다. 페이지를 새로고침하세요.");
@@ -237,10 +246,36 @@ export default function StepEditor({
         placeholder="이 step의 주제를 입력하세요."
       />
 
+      <label className="mb-2 block text-sm font-medium text-ink-700">
+        본문 내용 — AI 도구별 안내
+      </label>
+      <div className="mb-3 flex gap-1.5">
+        {CONTENT_TOOL_KEYS.map((tool) => (
+          <button
+            key={tool}
+            type="button"
+            onClick={() => setActiveTool(tool)}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              activeTool === tool
+                ? "bg-brand-600 text-white"
+                : "bg-ink-100 text-ink-600 hover:bg-ink-200"
+            }`}
+          >
+            {tool}
+            {!textByTool[tool].trim() && (
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  activeTool === tool ? "bg-white/70" : "bg-ink-400"
+                }`}
+                title="아직 작성되지 않음"
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-2 flex items-center justify-between">
-        <label className="block text-sm font-medium text-ink-700">
-          본문 내용
-        </label>
+        <span className="text-xs font-medium text-ink-500">{activeTool} 안내 편집 중</span>
         {!readOnly && (
           <div className="flex items-center gap-1">
             <button
@@ -355,7 +390,7 @@ export default function StepEditor({
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-200/70 bg-white px-5 py-3.5">
               <span className="text-sm font-semibold text-ink-500">
-                학생 화면 미리보기 — 실제 /learn 화면과 동일한 컴포넌트입니다
+                학생 화면 미리보기 ({activeTool} 기준) — 실제 /learn 화면과 동일한 컴포넌트입니다
               </span>
               <button
                 onClick={() => setShowPreview(false)}

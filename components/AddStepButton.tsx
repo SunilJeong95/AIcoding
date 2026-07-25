@@ -44,7 +44,7 @@ export default function AddStepButton() {
       const res = await fetch("/api/admin/steps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: trimmed, textContent: "" }),
+        body: JSON.stringify({ topic: trimmed }),
       });
       if (!res.ok) {
         setError("주제 추가에 실패했습니다.");

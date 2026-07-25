@@ -40,11 +40,13 @@ export async function PUT(
 
   const data: {
     topic?: string;
-    textContent?: string;
+    textContentByTool?: typeof parsed.data.textContentByTool;
     requiresUpload?: boolean;
   } = {};
   if (parsed.data.topic !== undefined) data.topic = parsed.data.topic;
-  if (parsed.data.textContent !== undefined) data.textContent = parsed.data.textContent;
+  if (parsed.data.textContentByTool !== undefined) {
+    data.textContentByTool = parsed.data.textContentByTool;
+  }
   if (parsed.data.requiresUpload !== undefined) data.requiresUpload = parsed.data.requiresUpload;
 
   const updated = await prisma.step.update({ where: { id }, data });

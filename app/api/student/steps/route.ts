@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
+import { contentToolKeyFor, type TextContentByTool } from "@/lib/validation";
+
+const NOT_AUTHORED_TEXT = "아직 이 AI 도구에 대한 안내가 준비되지 않았습니다.";
+
+// Resolves a Step's per-tool JSON body down to the single string StepData
+// expects, picking the variant for the student's own aiTool. An unmapped
+// tool (see contentToolKeyFor) or a not-yet-authored variant both fall back
+// to the same placeholder, rather than showing a blank step.
+function resolveTextContent(
+  textContentByTool: unknown,
+  aiTool: string,
+): string {
+  const key = contentToolKeyFor(aiTool);
+  if (!key) return NOT_AUTHORED_TEXT;
+  const byTool = (textContentByTool ?? {}) as TextContentByTool;
+  const text = byTool[key];
+  return text && text.trim() ? text : NOT_AUTHORED_TEXT;
+}
 
 // GET /api/student/steps?order=N — server-enforced sequential lock.
 // Without `order`, returns the current (awaiting) step. With `order`, returns
@@ -33,11 +51,19 @@ export async function GET(req: NextRequest) {
         id: true,
         order: true,
         topic: true,
-        textContent: true,
+        textContentByTool: true,
         requiresUpload: true,
       },
     }),
   ]);
+
+  const resolvedStep = step && {
+    id: step.id,
+    order: step.order,
+    topic: step.topic,
+    textContent: resolveTextContent(step.textContentByTool, auth.student.aiTool),
+    requiresUpload: step.requiresUpload,
+  };
 
   // The RETURNED step's own submission — when it's the current step, this
   // gates the "다음" button (requiresUpload). When browsing an already-
@@ -67,6 +93,6 @@ export async function GET(req: NextRequest) {
     // /api/student/advance. Distinct from `submitted`, which is only about
     // the returned step's own submission.
     completed: auth.student.completedAt !== null,
-    step,
+    step: resolvedStep,
   });
 }

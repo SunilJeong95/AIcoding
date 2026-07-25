@@ -28,13 +28,20 @@ async function main() {
   });
 
   for (const step of SAMPLE_STEPS) {
+    // Same seed body for all 3 tool variants — a real admin edit diverges
+    // them per tool afterward via the content editor.
+    const textContentByTool = {
+      Cursor: step.textContent,
+      "GitHub Copilot": step.textContent,
+      Claude: step.textContent,
+    };
     await prisma.step.upsert({
       where: { courseId_order: { courseId: 1, order: step.order } },
-      update: { textContent: step.textContent },
+      update: { textContentByTool },
       create: {
         courseId: 1,
         order: step.order,
-        textContent: step.textContent,
+        textContentByTool,
       },
     });
   }
