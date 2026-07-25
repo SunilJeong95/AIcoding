@@ -13,10 +13,9 @@ import { getStudentSession } from "@/lib/auth";
 // progress checks (currentStepSubmitted) work the same way regardless of
 // whether the step had a photo.
 //
-// currentStepOrder is capped at totalSteps, so it can't by itself tell
-// "on the last step, submitted, not yet advanced" apart from "actually
-// finished" — completedAt is the explicit signal for the latter, set only
-// when this endpoint is called FROM the real last step.
+// completedAt is the explicit "finished" signal, set only when this endpoint
+// is called FROM the real last step — see the nextOrder comment below for how
+// currentStepOrder itself represents that same event.
 export async function POST() {
   const prisma = getDb();
   const auth = await getStudentSession();
@@ -36,8 +35,14 @@ export async function POST() {
   }
 
   const totalSteps = await prisma.step.count({ where: { courseId: 1 } });
-  const nextOrder = Math.min(student.currentStepOrder + 1, totalSteps);
   const isLastStep = targetStep.order === totalSteps;
+  // Not capped at totalSteps: advancing past the real last step moves
+  // currentStepOrder to totalSteps + 1, a virtual "step" with no backing Step
+  // row. /api/student/steps then returns step: null for it, which the client
+  // renders as the congrats screen — so all the existing order-based
+  // 이전/다음 navigation works for it unchanged instead of needing special
+  // history/query-param handling.
+  const nextOrder = student.currentStepOrder + 1;
 
   try {
     await prisma.$transaction(async (tx) => {

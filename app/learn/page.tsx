@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import StepViewer, { type StepData } from "@/components/StepViewer";
 
 interface StepsResponse {
@@ -14,16 +14,7 @@ interface StepsResponse {
 }
 
 export default function LearnPage() {
-  return (
-    <Suspense fallback={null}>
-      <LearnPageInner />
-    </Suspense>
-  );
-}
-
-function LearnPageInner() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [data, setData] = useState<StepsResponse | null>(null);
   const [studentName, setStudentName] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -62,30 +53,6 @@ function LearnPageInner() {
     load();
   }, [load]);
 
-  // The congrats screen is shown only when the URL carries ?done=1 — pushed
-  // as its own history entry by onAdvance right after the "다음" click that
-  // finishes the course. That makes the browser back button a real Next.js
-  // router navigation back to plain /learn (showing the last step's content)
-  // instead of leaving the app — a raw history.pushState/popstate listener
-  // doesn't compose with the App Router's own history handling and made back
-  // reload straight into the completed state instead.
-  //
-  // On a fresh page load that lands directly on an already-completed course
-  // (no advance click happened this session), normalize the URL to include
-  // ?done=1 once so the congrats screen still shows immediately. Guarded to
-  // run only on the very first load so it never re-fires after the student
-  // navigates back (which removes ?done=1 on purpose).
-  const firstLoadHandledRef = useRef(false);
-  useEffect(() => {
-    if (firstLoadHandledRef.current) return;
-    if (!data || !data.step) return;
-    firstLoadHandledRef.current = true;
-    const isCurrentNow = data.step.order === data.currentStepOrder;
-    if (isCurrentNow && data.completed && searchParams.get("done") !== "1") {
-      router.replace("/learn?done=1");
-    }
-  }, [data, searchParams, router]);
-
   // Full-screen spinner while switching to a different step — advancing,
   // or browsing to a previous/next already-unlocked step.
   async function goTo(order?: number) {
@@ -105,11 +72,6 @@ function LearnPageInner() {
       throw new Error(json.error ?? "다음 단계로 넘어가지 못했습니다.");
     }
     await goTo();
-    // Push (not replace) so the browser back button has a "/learn" entry
-    // (no ?done=1) to return to, which renders the last step's content.
-    if (json.completed) {
-      router.push("/learn?done=1");
-    }
   }
 
   if (loading) {
@@ -137,13 +99,18 @@ function LearnPageInner() {
     );
   }
 
-  if (!data || !data.step) return null;
+  if (!data) return null;
 
-  const { currentStepOrder, totalSteps, submitted, photoPaths, completed, step } = data;
-  const isCurrent = step.order === currentStepOrder;
-  const showCongrats = isCurrent && completed && searchParams.get("done") === "1";
+  const { currentStepOrder, totalSteps, submitted, photoPaths, step } = data;
+  // The finished course has no backing Step row (order = totalSteps + 1) —
+  // /api/student/steps returns step: null for it. Treating that as a virtual
+  // final "step" lets the same order-based 이전/다음/현재 단계로 이동 controls
+  // reach and leave the congrats screen with no special-case navigation.
+  const viewOrder = step ? step.order : currentStepOrder;
+  const isCurrent = viewOrder === currentStepOrder;
+  const cappedCurrentOrder = Math.min(currentStepOrder, totalSteps);
   const progressPct =
-    totalSteps > 0 ? Math.min(100, Math.round((currentStepOrder / totalSteps) * 100)) : 0;
+    totalSteps > 0 ? Math.min(100, Math.round((cappedCurrentOrder / totalSteps) * 100)) : 0;
 
   return (
     <main className="min-h-screen bg-ink-50 pb-16">
@@ -155,7 +122,7 @@ function LearnPageInner() {
                 실습 교육
               </h1>
               <p className="mt-0.5 text-sm text-ink-500">
-                {studentName ? `${studentName}님 · ` : ""}진행 {currentStepOrder}/
+                {studentName ? `${studentName}님 · ` : ""}진행 {cappedCurrentOrder}/
                 {totalSteps}
               </p>
             </div>
@@ -176,8 +143,8 @@ function LearnPageInner() {
 
         <div className="flex items-center justify-between text-sm">
           <button
-            onClick={() => (showCongrats ? router.back() : goTo(step.order - 1))}
-            disabled={!showCongrats && step.order <= 1}
+            onClick={() => goTo(viewOrder - 1)}
+            disabled={viewOrder <= 1}
             className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium text-ink-600 transition hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-0"
           >
             ← 이전
@@ -191,7 +158,7 @@ function LearnPageInner() {
             </button>
           )}
           <button
-            onClick={() => goTo(step.order + 1)}
+            onClick={() => goTo(viewOrder + 1)}
             disabled={isCurrent}
             className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium text-ink-600 transition hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-0"
           >
@@ -199,17 +166,7 @@ function LearnPageInner() {
           </button>
         </div>
 
-        {showCongrats ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center">
-            <p className="text-4xl">🎉</p>
-            <p className="mt-3 text-lg font-bold text-emerald-800">
-              수강 완료를 축하합니다!
-            </p>
-            <p className="mt-1 text-sm text-emerald-700">
-              총 {totalSteps}개 단계를 모두 마쳤습니다. 수고하셨습니다.
-            </p>
-          </div>
-        ) : (
+        {step ? (
           <StepViewer
             key={step.id}
             step={step}
@@ -220,6 +177,16 @@ function LearnPageInner() {
             onUploaded={() => load()}
             onAdvance={onAdvance}
           />
+        ) : (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center">
+            <p className="text-4xl">🎉</p>
+            <p className="mt-3 text-lg font-bold text-emerald-800">
+              수강 완료를 축하합니다!
+            </p>
+            <p className="mt-1 text-sm text-emerald-700">
+              총 {totalSteps}개 단계를 모두 마쳤습니다. 수고하셨습니다.
+            </p>
+          </div>
         )}
       </div>
     </main>
