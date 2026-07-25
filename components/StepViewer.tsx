@@ -87,8 +87,21 @@ export default function StepViewer({
       </div>
 
       {step.textContent && (
-        <div className="prose mb-4 max-w-none text-ink-700 prose-headings:text-ink-900 prose-headings:font-bold prose-a:text-brand-600 prose-strong:text-ink-900 prose-img:rounded-xl prose-img:border prose-img:border-ink-200">
-          <ReactMarkdown>{step.textContent}</ReactMarkdown>
+        <div className="prose mb-4 max-w-none text-ink-700 prose-headings:text-ink-900 prose-headings:font-bold prose-a:text-brand-600 prose-strong:text-ink-900 prose-img:cursor-zoom-in prose-img:rounded-xl prose-img:border prose-img:border-ink-200">
+          <ReactMarkdown
+            components={{
+              img: ({ src, alt }) =>
+                typeof src === "string" ? (
+                  <img
+                    src={src}
+                    alt={alt ?? ""}
+                    onClick={() => setLightboxSrc(src)}
+                  />
+                ) : null,
+            }}
+          >
+            {step.textContent}
+          </ReactMarkdown>
         </div>
       )}
 
