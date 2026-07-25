@@ -114,7 +114,7 @@ export default function LearnPage() {
 
   return (
     <main className="min-h-screen bg-ink-50 pb-16">
-      <div className="mx-auto max-w-3xl space-y-6 p-4 pt-6">
+      <div className="mx-auto max-w-4xl space-y-6 p-4 pt-6">
         <header className="rounded-2xl border border-ink-200/70 bg-white p-5 shadow-soft">
           <div className="flex items-center justify-between">
             <div>

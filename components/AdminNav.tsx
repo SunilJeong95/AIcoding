@@ -28,7 +28,7 @@ export default function AdminNav({ name }: { name: string }) {
 
   return (
     <header className="sticky top-0 z-10 border-b border-ink-200/70 bg-white/85 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3.5">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
         <div className="flex items-center gap-6">
           <div className="flex shrink-0 items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-brand-600" aria-hidden />
