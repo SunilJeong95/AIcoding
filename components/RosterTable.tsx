@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import StudentSubmissionsModal from "./StudentSubmissionsModal";
 
 interface RosterRow {
   id: string;
@@ -18,6 +19,9 @@ export default function RosterTable() {
   const [rows, setRows] = useState<RosterRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,7 +95,13 @@ export default function RosterTable() {
                 rows.map((r) => (
                   <tr key={r.id} className="transition hover:bg-ink-50/60">
                     <td className="px-5 py-3.5 font-medium text-ink-900">
-                      {r.name}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudent({ id: r.id, name: r.name })}
+                        className="underline decoration-dotted underline-offset-2 transition hover:text-brand-600"
+                      >
+                        {r.name}
+                      </button>
                     </td>
                     <td className="px-5 py-3.5 text-ink-600">{r.employeeId}</td>
                     <td className="px-5 py-3.5">
@@ -116,6 +126,14 @@ export default function RosterTable() {
           </table>
         </div>
       </div>
+
+      {selectedStudent && (
+        <StudentSubmissionsModal
+          studentId={selectedStudent.id}
+          studentName={selectedStudent.name}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </section>
   );
 }

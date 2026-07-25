@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import PhotoUpload from "./PhotoUpload";
+import Lightbox from "./Lightbox";
 
 export interface StepData {
   id: string;
@@ -45,6 +46,7 @@ export default function StepViewer({
 }: StepViewerProps) {
   const [advancing, setAdvancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   async function handleAdvance() {
     setError(null);
@@ -97,11 +99,10 @@ export default function StepViewer({
           </p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {photoPaths.map((p) => (
-              <a
+              <button
                 key={p}
-                href={`/api/uploads/${p}`}
-                target="_blank"
-                rel="noreferrer"
+                type="button"
+                onClick={() => setLightboxSrc(`/api/uploads/${p}`)}
                 className="block aspect-square overflow-hidden rounded-lg border border-ink-200 bg-ink-50"
               >
                 <img
@@ -109,10 +110,14 @@ export default function StepViewer({
                   alt=""
                   className="h-full w-full object-cover"
                 />
-              </a>
+              </button>
             ))}
           </div>
         </div>
+      )}
+
+      {lightboxSrc && (
+        <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
       )}
 
       {isCurrent && (
