@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { MAX_CODES } from "@/lib/codes";
+import { deleteUploads } from "@/lib/upload";
 
 // GET /api/admin/codes — list all entry codes with status + assignee info.
 export async function GET() {
@@ -37,7 +38,9 @@ export async function GET() {
 // (revokes their Session) and removes their Student row (and its
 // Submissions, which have no cascade from Student) before deleting the
 // EntryCode itself — Student.entryCodeId has no onDelete cascade, so the
-// code row can't be deleted out from under an existing Student.
+// code row can't be deleted out from under an existing Student. Uploaded
+// photo files backing those Submissions are removed from storage too, after
+// the DB transaction commits.
 export async function DELETE(req: Request) {
   const prisma = getDb();
   const admin = await getAdminSession();
@@ -51,14 +54,20 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "삭제할 코드를 선택하세요" }, { status: 400 });
   }
 
-  await prisma.$transaction(async (tx) => {
+  const photoPaths = await prisma.$transaction(async (tx) => {
     const codes = await tx.entryCode.findMany({
       where: { id: { in: ids } },
       include: { student: true },
     });
 
     const studentIds = codes.filter((c) => c.student).map((c) => c.student!.id);
+    let paths: string[] = [];
     if (studentIds.length > 0) {
+      const submissions = await tx.submission.findMany({
+        where: { studentId: { in: studentIds } },
+        select: { photoPaths: true },
+      });
+      paths = submissions.flatMap((s) => s.photoPaths);
       await tx.submission.deleteMany({ where: { studentId: { in: studentIds } } });
       await tx.student.deleteMany({ where: { id: { in: studentIds } } });
     }
@@ -72,7 +81,14 @@ export async function DELETE(req: Request) {
     }
 
     await tx.entryCode.deleteMany({ where: { id: { in: ids } } });
+    return paths;
   });
+
+  if (photoPaths.length > 0) {
+    await deleteUploads(photoPaths).catch((err) =>
+      console.error("Failed to delete submission photos from storage:", err),
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

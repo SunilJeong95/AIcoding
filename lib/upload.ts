@@ -102,6 +102,18 @@ export async function saveUpload(
   return relPath;
 }
 
+// Deletes stored objects by their relative keys (e.g. "submissions/ab12.png").
+// Best-effort: callers should not let a storage failure block the DB change
+// that already dropped the referencing row, but should log it.
+export async function deleteUploads(relPaths: string[]): Promise<void> {
+  if (relPaths.length === 0) return;
+  const client = await getSupabase();
+  const { error } = await client.storage.from(BUCKET).remove(relPaths);
+  if (error) {
+    throw new Error(`Delete failed: ${error.message}`);
+  }
+}
+
 // Validates a stored relative key before it is read back. Returns the key if the
 // subdir is allow-listed and the filename is a UUID + allowed extension, else
 // null. Used by the GET /api/uploads/[...path] streaming handler.

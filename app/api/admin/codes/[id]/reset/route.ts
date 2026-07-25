@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { deleteUploads } from "@/lib/upload";
 
 // POST /api/admin/codes/[id]/reset — force-logout + recycle a code.
 //
 // Revokes the student's Session (so their next request 401s and the cookie is
 // cleared by getStudentSession), deletes the Student row (and its submissions,
 // which have no cascade from Student), and resets the EntryCode back to unused
-// so it can be handed to a new person.
+// so it can be handed to a new person. Uploaded photo files backing those
+// submissions are removed from storage too, after the DB transaction commits.
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -27,15 +29,21 @@ export async function POST(
     return NextResponse.json({ error: "코드를 찾을 수 없습니다" }, { status: 404 });
   }
 
-  await prisma.$transaction(async (tx) => {
+  const photoPaths = await prisma.$transaction(async (tx) => {
     // Force-logout: revoke every student session bound to this code.
     await tx.session.updateMany({
       where: { kind: "student", entryCode: code.code },
       data: { revoked: true },
     });
 
+    let paths: string[] = [];
     if (code.student) {
       // Submission has no onDelete cascade from Student — clear them first.
+      const submissions = await tx.submission.findMany({
+        where: { studentId: code.student.id },
+        select: { photoPaths: true },
+      });
+      paths = submissions.flatMap((s) => s.photoPaths);
       await tx.submission.deleteMany({ where: { studentId: code.student.id } });
       await tx.student.delete({ where: { id: code.student.id } });
     }
@@ -50,7 +58,15 @@ export async function POST(
         usedAt: null,
       },
     });
+
+    return paths;
   });
+
+  if (photoPaths.length > 0) {
+    await deleteUploads(photoPaths).catch((err) =>
+      console.error("Failed to delete submission photos from storage:", err),
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }
