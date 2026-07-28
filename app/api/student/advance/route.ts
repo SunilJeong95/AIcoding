@@ -44,52 +44,46 @@ export async function POST() {
   // history/query-param handling.
   const nextOrder = student.currentStepOrder + 1;
 
-  try {
-    await prisma.$transaction(async (tx) => {
-      if (targetStep.requiresUpload) {
-        const submission = await tx.submission.findUnique({
-          where: {
-            studentId_stepId: { studentId: student.id, stepId: targetStep.id },
-          },
-        });
-        if (!submission || submission.status !== "uploaded") {
-          throw new Error("NOT_UPLOADED");
-        }
-      } else {
-        await tx.submission.upsert({
-          where: {
-            studentId_stepId: { studentId: student.id, stepId: targetStep.id },
-          },
-          create: {
-            studentId: student.id,
-            stepId: targetStep.id,
-            status: "uploaded",
-          },
-          update: { status: "uploaded", uploadedAt: new Date() },
-        });
-      }
-      const studentUpdate: { currentStepOrder?: number; completedAt?: Date } = {};
-      if (nextOrder !== student.currentStepOrder) {
-        studentUpdate.currentStepOrder = nextOrder;
-      }
-      if (isLastStep) {
-        studentUpdate.completedAt = new Date();
-      }
-      if (Object.keys(studentUpdate).length > 0) {
-        await tx.student.update({
-          where: { id: student.id },
-          data: studentUpdate,
-        });
-      }
+  // D1 has no transaction support — sequential statements. Scoped to the
+  // student's own row; worst case is a rare double-advance from a
+  // double-click, which the client already guards against.
+  if (targetStep.requiresUpload) {
+    const submission = await prisma.submission.findUnique({
+      where: {
+        studentId_stepId: { studentId: student.id, stepId: targetStep.id },
+      },
     });
-  } catch (e) {
-    if (e instanceof Error && e.message === "NOT_UPLOADED") {
+    if (!submission || submission.status !== "uploaded") {
       return NextResponse.json(
         { error: "사진을 먼저 업로드하세요." },
         { status: 400 },
       );
     }
-    throw e;
+  } else {
+    await prisma.submission.upsert({
+      where: {
+        studentId_stepId: { studentId: student.id, stepId: targetStep.id },
+      },
+      create: {
+        studentId: student.id,
+        stepId: targetStep.id,
+        status: "uploaded",
+      },
+      update: { status: "uploaded", uploadedAt: new Date() },
+    });
+  }
+  const studentUpdate: { currentStepOrder?: number; completedAt?: Date } = {};
+  if (nextOrder !== student.currentStepOrder) {
+    studentUpdate.currentStepOrder = nextOrder;
+  }
+  if (isLastStep) {
+    studentUpdate.completedAt = new Date();
+  }
+  if (Object.keys(studentUpdate).length > 0) {
+    await prisma.student.update({
+      where: { id: student.id },
+      data: studentUpdate,
+    });
   }
 
   return NextResponse.json({

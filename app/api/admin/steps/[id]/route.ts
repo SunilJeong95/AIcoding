@@ -73,16 +73,17 @@ export async function DELETE(
     return NextResponse.json({ error: "lock_required" }, { status: 403 });
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.step.delete({ where: { id } });
+  // D1 has no transaction support — sequential statements. Worst case on a
+  // mid-sequence failure is a gap in `order` values (not a collision), which
+  // self-heals on the next delete.
+  await prisma.step.delete({ where: { id } });
 
-    // Shift every step that came after the deleted one down by one in a single
-    // statement — keeps the @@unique([courseId, order]) constraint satisfied
-    // without a per-row round trip.
-    await tx.step.updateMany({
-      where: { courseId: 1, order: { gt: step.order } },
-      data: { order: { decrement: 1 } },
-    });
+  // Shift every step that came after the deleted one down by one in a single
+  // statement — keeps the @@unique([courseId, order]) constraint satisfied
+  // without a per-row round trip.
+  await prisma.step.updateMany({
+    where: { courseId: 1, order: { gt: step.order } },
+    data: { order: { decrement: 1 } },
   });
 
   return NextResponse.json({ ok: true });

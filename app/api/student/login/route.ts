@@ -37,27 +37,27 @@ export async function POST(req: NextRequest) {
   let currentStepOrder: number;
 
   if (entryCode.status === "unused") {
-    // First use — bind the code to this person.
-    const student = await prisma.$transaction(async (tx) => {
-      const created = await tx.student.create({
-        data: {
-          name,
-          employeeId,
-          aiTool,
-          entryCodeId: entryCode.id,
-        },
-      });
-      await tx.entryCode.update({
-        where: { id: entryCode.id },
-        data: {
-          status: "in-use",
-          assignedStudentName: name,
-          assignedEmployeeId: employeeId,
-          aiTool,
-          usedAt: new Date(),
-        },
-      });
-      return created;
+    // First use — bind the code to this person. D1 has no transaction
+    // support, so these run as sequential statements; Student.entryCodeId is
+    // @unique, so a concurrent double-submit still fails at the DB
+    // constraint level (P2002) rather than creating two bound students.
+    const student = await prisma.student.create({
+      data: {
+        name,
+        employeeId,
+        aiTool,
+        entryCodeId: entryCode.id,
+      },
+    });
+    await prisma.entryCode.update({
+      where: { id: entryCode.id },
+      data: {
+        status: "in-use",
+        assignedStudentName: name,
+        assignedEmployeeId: employeeId,
+        aiTool,
+        usedAt: new Date(),
+      },
     });
     studentId = student.id;
     currentStepOrder = student.currentStepOrder;

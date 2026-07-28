@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
+import { parsePhotoPaths } from "@/lib/photoPaths";
 
 // GET /api/admin/students/[id]/submissions — every step for the course, each
 // paired with that student's uploaded photos (if any), ordered by step order.
@@ -48,7 +49,7 @@ export async function GET(
         order: s.order,
         topic: s.topic,
         requiresUpload: s.requiresUpload,
-        photoPaths: submission?.photoPaths ?? [],
+        photoPaths: parsePhotoPaths(submission?.photoPaths),
         uploaded: submission?.status === "uploaded",
       };
     }),

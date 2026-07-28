@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
 import { saveUpload } from "@/lib/upload";
+import { parsePhotoPaths, serializePhotoPaths } from "@/lib/photoPaths";
 
 // POST /api/student/submit — multipart photo upload for the CURRENT step.
 // Only records the submission (status "uploaded"); it no longer advances
@@ -83,7 +84,17 @@ export async function POST(req: NextRequest) {
 
   // Record the submission (one per step per student) — each call APPENDS to
   // the step's photo set, so students can upload multiple photos across
-  // several selections instead of the latest one replacing the rest.
+  // several selections instead of the latest one replacing the rest. SQLite
+  // has no atomic array push, so read the existing set first and merge —
+  // acceptable for a single student's own low-concurrency uploads.
+  const existing = await prisma.submission.findUnique({
+    where: {
+      studentId_stepId: { studentId: student.id, stepId: targetStep.id },
+    },
+    select: { photoPaths: true },
+  });
+  const mergedPaths = [...parsePhotoPaths(existing?.photoPaths), ...photoPaths];
+
   const submission = await prisma.submission.upsert({
     where: {
       studentId_stepId: { studentId: student.id, stepId: targetStep.id },
@@ -91,15 +102,15 @@ export async function POST(req: NextRequest) {
     create: {
       studentId: student.id,
       stepId: targetStep.id,
-      photoPaths,
+      photoPaths: serializePhotoPaths(photoPaths),
       status: "uploaded",
     },
     update: {
-      photoPaths: { push: photoPaths },
+      photoPaths: serializePhotoPaths(mergedPaths),
       status: "uploaded",
       uploadedAt: new Date(),
     },
   });
 
-  return NextResponse.json({ ok: true, photoPaths: submission.photoPaths });
+  return NextResponse.json({ ok: true, photoPaths: parsePhotoPaths(submission.photoPaths) });
 }

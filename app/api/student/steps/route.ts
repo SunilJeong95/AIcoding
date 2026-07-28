@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getStudentSession } from "@/lib/auth";
 import { contentToolKeyFor, type TextContentByTool } from "@/lib/validation";
+import { parsePhotoPaths } from "@/lib/photoPaths";
 
 const NOT_AUTHORED_TEXT = "아직 이 AI 도구에 대한 안내가 준비되지 않았습니다.";
 
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
       select: { status: true, photoPaths: true },
     });
     submitted = submission?.status === "uploaded";
-    photoPaths = submission?.photoPaths ?? [];
+    photoPaths = parsePhotoPaths(submission?.photoPaths);
   }
 
   return NextResponse.json({

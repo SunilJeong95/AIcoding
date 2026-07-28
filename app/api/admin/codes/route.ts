@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { MAX_CODES } from "@/lib/codes";
 import { deleteUploads } from "@/lib/upload";
+import { parsePhotoPaths } from "@/lib/photoPaths";
 
 // GET /api/admin/codes — list all entry codes with status + assignee info.
 export async function GET() {
@@ -54,35 +55,34 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "삭제할 코드를 선택하세요" }, { status: 400 });
   }
 
-  const photoPaths = await prisma.$transaction(async (tx) => {
-    const codes = await tx.entryCode.findMany({
-      where: { id: { in: ids } },
-      include: { student: true },
-    });
-
-    const studentIds = codes.filter((c) => c.student).map((c) => c.student!.id);
-    let paths: string[] = [];
-    if (studentIds.length > 0) {
-      const submissions = await tx.submission.findMany({
-        where: { studentId: { in: studentIds } },
-        select: { photoPaths: true },
-      });
-      paths = submissions.flatMap((s) => s.photoPaths);
-      await tx.submission.deleteMany({ where: { studentId: { in: studentIds } } });
-      await tx.student.deleteMany({ where: { id: { in: studentIds } } });
-    }
-
-    const codeValues = codes.map((c) => c.code);
-    if (codeValues.length > 0) {
-      await tx.session.updateMany({
-        where: { kind: "student", entryCode: { in: codeValues } },
-        data: { revoked: true },
-      });
-    }
-
-    await tx.entryCode.deleteMany({ where: { id: { in: ids } } });
-    return paths;
+  // D1 has no transaction support — these run as plain sequential statements
+  // (same order as before). Low risk: admin-only, low-concurrency action.
+  const codes = await prisma.entryCode.findMany({
+    where: { id: { in: ids } },
+    include: { student: true },
   });
+
+  const studentIds = codes.filter((c) => c.student).map((c) => c.student!.id);
+  let photoPaths: string[] = [];
+  if (studentIds.length > 0) {
+    const submissions = await prisma.submission.findMany({
+      where: { studentId: { in: studentIds } },
+      select: { photoPaths: true },
+    });
+    photoPaths = submissions.flatMap((s) => parsePhotoPaths(s.photoPaths));
+    await prisma.submission.deleteMany({ where: { studentId: { in: studentIds } } });
+    await prisma.student.deleteMany({ where: { id: { in: studentIds } } });
+  }
+
+  const codeValues = codes.map((c) => c.code);
+  if (codeValues.length > 0) {
+    await prisma.session.updateMany({
+      where: { kind: "student", entryCode: { in: codeValues } },
+      data: { revoked: true },
+    });
+  }
+
+  await prisma.entryCode.deleteMany({ where: { id: { in: ids } } });
 
   if (photoPaths.length > 0) {
     await deleteUploads(photoPaths).catch((err) =>

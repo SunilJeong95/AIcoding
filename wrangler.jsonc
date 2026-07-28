@@ -14,10 +14,11 @@
       "service": "aicoding"
     }
   ],
-  "hyperdrive": [
+  "d1_databases": [
     {
-      "binding": "HYPERDRIVE",
-      "id": "b896b012eefa46318f6d74ef79a8b095"
+      "binding": "DB",
+      "database_name": "aicoding",
+      "database_id": "609a41d2-c75c-40fe-9c6c-149f8f9d5d85"
     }
   ]
 }

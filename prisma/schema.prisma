@@ -3,9 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  // Never read at runtime — the D1 driver adapter (lib/db.ts) owns the real
+  // connection. Prisma's CLI (generate/migrate diff) still wants a url.
+  url      = env("DATABASE_URL")
 }
 
 // Single course — represented as a single row (id fixed = 1). Steps belong to it.
@@ -62,7 +63,9 @@ model Submission {
   id         String   @id @default(cuid())
   studentId  String
   stepId     String
-  photoPaths String[] @default([]) // relative paths under uploads/, empty for no-upload-required steps
+  // JSON-encoded string[] — SQLite/D1 has no native array type. Read/write
+  // only through lib/photoPaths.ts's parse/serialize helpers.
+  photoPaths String @default("[]") // relative paths under uploads/, empty for no-upload-required steps
   status     String   @default("uploading") // "uploading" | "uploaded"
   uploadedAt DateTime @default(now())
   student    Student  @relation(fields: [studentId], references: [id])

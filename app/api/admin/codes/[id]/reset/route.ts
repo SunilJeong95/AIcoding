@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth";
 import { deleteUploads } from "@/lib/upload";
+import { parsePhotoPaths } from "@/lib/photoPaths";
 
 // POST /api/admin/codes/[id]/reset — force-logout + recycle a code.
 //
@@ -29,37 +30,36 @@ export async function POST(
     return NextResponse.json({ error: "코드를 찾을 수 없습니다" }, { status: 404 });
   }
 
-  const photoPaths = await prisma.$transaction(async (tx) => {
-    // Force-logout: revoke every student session bound to this code.
-    await tx.session.updateMany({
-      where: { kind: "student", entryCode: code.code },
-      data: { revoked: true },
+  // D1 has no transaction support — these run as plain sequential statements
+  // (same order as before). Low risk: admin-only, low-concurrency action.
+
+  // Force-logout: revoke every student session bound to this code.
+  await prisma.session.updateMany({
+    where: { kind: "student", entryCode: code.code },
+    data: { revoked: true },
+  });
+
+  let photoPaths: string[] = [];
+  if (code.student) {
+    // Submission has no onDelete cascade from Student — clear them first.
+    const submissions = await prisma.submission.findMany({
+      where: { studentId: code.student.id },
+      select: { photoPaths: true },
     });
+    photoPaths = submissions.flatMap((s) => parsePhotoPaths(s.photoPaths));
+    await prisma.submission.deleteMany({ where: { studentId: code.student.id } });
+    await prisma.student.delete({ where: { id: code.student.id } });
+  }
 
-    let paths: string[] = [];
-    if (code.student) {
-      // Submission has no onDelete cascade from Student — clear them first.
-      const submissions = await tx.submission.findMany({
-        where: { studentId: code.student.id },
-        select: { photoPaths: true },
-      });
-      paths = submissions.flatMap((s) => s.photoPaths);
-      await tx.submission.deleteMany({ where: { studentId: code.student.id } });
-      await tx.student.delete({ where: { id: code.student.id } });
-    }
-
-    await tx.entryCode.update({
-      where: { id },
-      data: {
-        status: "unused",
-        assignedStudentName: null,
-        assignedEmployeeId: null,
-        aiTool: null,
-        usedAt: null,
-      },
-    });
-
-    return paths;
+  await prisma.entryCode.update({
+    where: { id },
+    data: {
+      status: "unused",
+      assignedStudentName: null,
+      assignedEmployeeId: null,
+      aiTool: null,
+      usedAt: null,
+    },
   });
 
   if (photoPaths.length > 0) {

@@ -28,49 +28,46 @@ export interface GenerateResult {
 
 // Generate up to `count` new entry codes, enforcing the hard cap of 100 total.
 //
-// The count-then-insert runs inside a single transaction so two concurrent
-// generate calls cannot both read an under-cap count and race past 100. Codes
-// are guaranteed unique both within the batch and against existing rows.
+// D1 has no transaction support, so the count-then-insert is two plain
+// sequential statements rather than one atomic check-and-act — two
+// concurrent generate calls could together slightly exceed the 100 cap.
+// Accepted as a soft-cap risk on an admin-only, effectively single-operator
+// tool. Codes are guaranteed unique both within the batch and against
+// existing rows.
 //
 // Every insert is batched into one createManyAndReturn call — on Workers each
 // round trip to the DB costs real latency, and a loop of individual create()
-// calls for a full-size batch (up to 100) blew past Prisma's 5s default
-// transaction timeout and aborted with an unhandled 500.
+// calls for a full-size batch (up to 100) would be far slower.
 export async function generateCodes(count: number): Promise<GenerateResult> {
   const prisma = getDb();
-  return prisma.$transaction(
-    async (tx) => {
-      const existingCount = await tx.entryCode.count();
-      const capacityBefore = Math.max(0, MAX_CODES - existingCount);
-      const toCreate = Math.min(count, capacityBefore);
+  const existingCount = await prisma.entryCode.count();
+  const capacityBefore = Math.max(0, MAX_CODES - existingCount);
+  const toCreate = Math.min(count, capacityBefore);
 
-      let created: EntryCode[] = [];
-      if (toCreate > 0) {
-        const taken = new Set(
-          (await tx.entryCode.findMany({ select: { code: true } })).map(
-            (c) => c.code,
-          ),
-        );
-        const fresh: string[] = [];
-        while (fresh.length < toCreate) {
-          const candidate = makeCode();
-          if (taken.has(candidate)) continue;
-          taken.add(candidate);
-          fresh.push(candidate);
-        }
-        created = await tx.entryCode.createManyAndReturn({
-          data: fresh.map((code) => ({ code })),
-        });
-      }
+  let created: EntryCode[] = [];
+  if (toCreate > 0) {
+    const taken = new Set(
+      (await prisma.entryCode.findMany({ select: { code: true } })).map(
+        (c) => c.code,
+      ),
+    );
+    const fresh: string[] = [];
+    while (fresh.length < toCreate) {
+      const candidate = makeCode();
+      if (taken.has(candidate)) continue;
+      taken.add(candidate);
+      fresh.push(candidate);
+    }
+    created = await prisma.entryCode.createManyAndReturn({
+      data: fresh.map((code) => ({ code })),
+    });
+  }
 
-      return {
-        created,
-        requested: count,
-        createdCount: toCreate,
-        capacityBefore,
-        capped: toCreate < count,
-      };
-    },
-    { timeout: 15000 },
-  );
+  return {
+    created,
+    requested: count,
+    createdCount: toCreate,
+    capacityBefore,
+    capped: toCreate < count,
+  };
 }
