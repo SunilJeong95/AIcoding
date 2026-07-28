@@ -27,19 +27,24 @@ export async function getStudentSession(): Promise<StudentAuth | null> {
   const data = session.student;
   if (!data?.sessionId || !data.studentId) return null;
 
-  const sessionRow = await prisma.session.findUnique({
-    where: { id: data.sessionId },
-  });
-  // Missing or revoked session → force-logout. Do this BEFORE touching Student.
+  // Neither query depends on the other's result (both ids come straight off
+  // the decrypted cookie) — fire them together to save a DB round trip.
+  // The revoked check below still runs before the Student row is trusted, so
+  // the original "revoked-first" guarantee is preserved.
+  const [sessionRow, student] = await Promise.all([
+    prisma.session.findUnique({
+      where: { id: data.sessionId },
+      select: { revoked: true, kind: true },
+    }),
+    prisma.student.findUnique({ where: { id: data.studentId } }),
+  ]);
+  // Missing or revoked session → force-logout.
   if (!sessionRow || sessionRow.revoked || sessionRow.kind !== "student") {
     return null;
   }
 
   // Session is valid, but the Student row may have been deleted by a Reset.
   // Tolerate a dangling studentId: null, not a throw.
-  const student = await prisma.student.findUnique({
-    where: { id: data.studentId },
-  });
   if (!student) return null;
 
   return { sessionId: data.sessionId, student };
@@ -59,6 +64,7 @@ export async function getAdminSession(): Promise<AdminAuth | null> {
 
   const sessionRow = await prisma.session.findUnique({
     where: { id: data.adminSessionId },
+    select: { revoked: true, kind: true },
   });
   if (!sessionRow || sessionRow.revoked || sessionRow.kind !== "admin") {
     return null;

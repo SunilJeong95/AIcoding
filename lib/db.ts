@@ -28,7 +28,10 @@ function resolveConnectionString(): string {
 export const getDb = cache(
   (): PrismaClient =>
     new PrismaClient({
-      adapter: new PrismaPg({ connectionString: resolveConnectionString() }),
+      // max: 1 — Hyperdrive already pools upstream; a single local connection
+      // avoids the pg.Pool machinery (idle timers, waiting-client queue) that
+      // a request-scoped client never needs, which trims per-request CPU.
+      adapter: new PrismaPg({ connectionString: resolveConnectionString(), max: 1 }),
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     }),
 );
