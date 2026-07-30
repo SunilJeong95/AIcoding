@@ -141,6 +141,36 @@ export default function LearnPage() {
           </div>
         </header>
 
+        <div className="rounded-2xl border border-ink-200/70 bg-white p-3 shadow-soft">
+          <p className="mb-2 px-1 text-xs font-medium text-ink-500">
+            단계 바로가기
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((n) => {
+              const locked = n > currentStepOrder;
+              const active = n === viewOrder;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => goTo(n)}
+                  disabled={locked}
+                  title={locked ? `${n}단계 (아직 잠김)` : `${n}단계로 이동`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums transition ${
+                    active
+                      ? "bg-brand-600 text-white"
+                      : locked
+                        ? "cursor-not-allowed bg-ink-100 text-ink-300"
+                        : "border border-ink-200 text-ink-600 hover:bg-ink-100"
+                  }`}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex items-center justify-between text-sm">
           <button
             onClick={() => goTo(viewOrder - 1)}
